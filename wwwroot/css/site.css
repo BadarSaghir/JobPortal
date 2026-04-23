@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  /* Define your Career 635 Emerald Green Theme here */
+  --color-primary: oklch(0.705 0.141 165.23);   /* Emerald-500 */
+  --color-secondary: oklch(0.258 0.092 163.22); /* Emerald-950 (Professional) */
+  --color-accent: oklch(0.852 0.199 144.68);    /* Light Green */
+  
+  /* You can also define custom spacing or radii here */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+
+/* Custom Base Styles */
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
