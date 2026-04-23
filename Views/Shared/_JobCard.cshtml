@@ -1,0 +1,56 @@
+@model Career635.Features.Jobs.Models.HomeJobViewModel
+
+<div class="group relative bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+    <div class="flex justify-between items-start mb-8">
+        @if (!string.IsNullOrEmpty(Model.MinEducationLevel))
+        {
+            <div class="px-3 py-1 bg-primary/5 text-primary text-[10px] font-black uppercase rounded-lg tracking-widest">
+                @Model.MinEducationLevel Required
+            </div>
+        }
+        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-primary transition-colors">
+            Posted @Model.PostedAt.ToString("MMM dd")
+        </span>
+    </div>
+
+    <h3 class="text-2xl font-black text-secondary group-hover:text-primary transition-colors leading-tight mb-4">
+        @Model.Title
+    </h3>
+
+    <!-- Meta Info: Only shows if data exists -->
+    <div class="flex flex-wrap gap-6 text-sm text-slate-500 mb-10">
+        @if (!string.IsNullOrEmpty(Model.WorkLocation))
+        {
+            <span class="flex items-center gap-1.5 font-medium">
+                <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i> @Model.WorkLocation
+            </span>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.LocationType))
+        {
+            <span class="flex items-center gap-1.5 font-medium">
+                <i data-lucide="clock" class="w-4 h-4 text-primary"></i> @Model.LocationType
+            </span>
+        }
+
+        @if (Model.RequiredExperienceYears > 0)
+        {
+            <span class="flex items-center gap-1.5 font-medium">
+                <i data-lucide="briefcase" class="w-4 h-4 text-primary"></i> @Model.RequiredExperienceYears Years Exp.
+            </span>
+        }
+        else if (Model.RequiredExperienceYears == 0)
+        {
+            <span class="flex items-center gap-1.5 font-medium text-emerald-600">
+                <i data-lucide="zap" class="w-4 h-4 text-primary"></i> Entry Level
+            </span>
+        }
+    </div>
+
+    <a asp-controller="Jobs" asp-action="Details" asp-route-id="@Model.Id" 
+       class="inline-flex items-center gap-2 text-sm font-bold text-secondary group-hover:text-primary transition-all">
+        View Role Specification <i data-lucide="arrow-up-right" class="w-4 h-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1"></i>
+    </a>
+    
+    <a asp-controller="Jobs" asp-action="Details" asp-route-id="@Model.Id" class="absolute inset-0"></a>
+</div>

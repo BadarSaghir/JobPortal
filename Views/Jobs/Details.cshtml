@@ -1,0 +1,213 @@
+@model Career635.Features.Jobs.Models.JobDetailViewModel
+@using Career635.Infrastructure.Common @* For MarkdownRenderer *@
+
+@{
+    ViewData["Title"] = Model.Title;
+    var timeLeft = Model.ExpiresAt - DateTime.UtcNow;
+}
+
+<style>
+    @@media print {
+        @@page { margin: 1.5cm; }
+        body { background: white !important; color: black !important; font-size: 11pt; }
+        .print-hidden { display: none !important; }
+        .print-full-width { width: 100% !important; flex: 0 0 100% !important; max-width: 100% !important; }
+        /* Professional document styling for mandatory boxes */
+        .spec-box { 
+            background: white !important; 
+            border: 1px solid #333 !important; 
+            color: black !important; 
+            border-radius: 4px !important;
+            padding: 20px !important;
+            box-shadow: none !important;
+        }
+        .text-primary { color: black !important; font-weight: bold; }
+        .rounded-3xl, .rounded-\[3rem\] { border-radius: 0 !important; }
+        .shadow-xl, .shadow-2xl { box-shadow: none !important; }
+    }
+</style>
+
+<div class="bg-slate-50 min-h-screen pb-24 font-sans print:bg-white print:pb-0">
+
+    <!-- 1. TOP UTILITY BAR (HIDDEN ON PRINT) -->
+    <div class="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 print:hidden">
+        <div class="container mx-auto px-6 h-14 flex items-center justify-between">
+            <a href="/Search" class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Search
+            </a>
+            <div class="flex items-center gap-4">
+                <button onclick="window.print()" class="bg-secondary text-white px-5 py-2 rounded-lg flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all">
+                    Print Official Specification <i data-lucide="printer" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-6 py-12 print:py-0 print:px-0">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+
+            <!-- MAIN COLUMN: CONTENT -->
+            <div class="lg:col-span-8 space-y-8 print:col-span-12 print-full-width">
+
+                <!-- SECTION 1: HEADER CARD -->
+                <div class="bg-white rounded-[3rem] p-10 lg:p-16 border border-slate-200 shadow-sm print:shadow-none print:px-4 relative overflow-hidden print:border-0 print:p-0 print:mb-12">
+                    
+                    <!-- PRINT ONLY HEADER -->
+                    <div class="hidden print:flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
+                        <div>
+                            <h2 class="text-2xl font-black tracking-tighter uppercase leading-none">Career<span class="text-emerald-600">635</span></h2>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">Recruitment & Personnel Division</p>
+                        </div>
+                        <div class="text-right text-[9px] font-mono text-slate-400">
+                            DOC-ID: @Model.Id.ToString().ToUpper().Substring(0,13) <br/>
+                            DATE: @DateTime.UtcNow.ToString("dd/MM/yyyy")
+                        </div>
+                    </div>
+
+                    <div class="relative z-10">
+                        <div class="flex flex-wrap gap-3 mb-8">
+                            <span class="px-4 py-1.5 bg-emerald-50 text-primary text-[10px] font-black uppercase rounded-full border border-primary/10 print:border-slate-300 print:text-black">
+                                @Model.MinEducationLevel Level
+                            </span>
+                            @if(!string.IsNullOrEmpty(Model.JobCategory)) {
+                                <span class="px-4 py-1.5 bg-slate-50 text-slate-500 text-[10px] font-black uppercase rounded-full border border-slate-100 print:border-slate-300 print:text-black">
+                                    @Model.JobCategory
+                                </span>
+                            }
+                            @if (Model.IsPecRequired) {
+                                <span class="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-full border border-blue-100 print:border-slate-300 print:text-black">
+                                    PEC Registered Required
+                                </span>
+                            }
+                        </div>
+
+                        <h1 class="text-4xl md:text-6xl font-black text-secondary tracking-tighter leading-[1.1] mb-12 print:text-3xl print:text-black">@Model.Title</h1>
+
+                        <!-- SPECIFICATION GRID: USES FLEX-WRAP TO PREVENT EMPTY SPACE -->
+                        <div class="flex flex-wrap gap-y-10 gap-x-16 py-10 border-y border-slate-100 print:border-slate-300">
+                            <div class="min-w-[140px]">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Min. Experience</p>
+                                <p class="text-sm font-bold text-secondary print:text-black">@Model.RequiredExperienceYears+ Years</p>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.SalaryGrade)) {
+                                <div class="min-w-[140px]">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pay Scale</p>
+                                    <p class="text-sm font-bold text-secondary print:text-black">@Model.SalaryGrade</p>
+                                </div>
+                            }
+  @if (Model.TotalPositions.HasValue&&Model.TotalPositions>0) {
+                            <div class="min-w-[140px]">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Vacancies</p>
+                                <p class="text-sm font-bold text-secondary print:text-black"> @Model.TotalPositions?.ToString("D2") Post(s)</p>
+                            </div>
+}
+                            @if (!string.IsNullOrWhiteSpace(Model?.EmploymentType)) {
+                                <div class="min-w-[140px]">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Job Type</p>
+                                    <p class="text-sm font-bold text-secondary print:text-black">@Model.EmploymentType</p>
+                                </div>
+                            }
+
+                            @if (Model!.MinAge.HasValue) {
+                                <div class="min-w-[140px]">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Age Bracket</p>
+                                    <p class="text-sm font-bold text-secondary print:text-black">@Model.MinAge - @(Model.MaxAge ?? 60) Years</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: DYNAMIC MARKDOWN CONTENT -->
+                <div class="space-y-16 px-2 lg:px-12 print:px-0">
+                    
+                    @if (!string.IsNullOrWhiteSpace(Model.Description)) {
+                        <section>
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 print:text-black">
+                                <span class="w-8 h-[2px] bg-primary print:hidden"></span> Role Summary
+                            </h3>
+                            <div class="prose prose-slate max-w-none prose-p:leading-relaxed prose-p:text-slate-600 print:text-sm print:text-black">
+                                @MarkdownRenderer.Parse(Model.Description)
+                            </div>
+                        </section>
+                    }
+
+                    @if (Model.RequiredSkills?.Any() == true) {
+                        <section>
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 print:text-black">
+                                <span class="w-8 h-[2px] bg-primary print:hidden"></span> Technical Competencies
+                            </h3>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach (var skill in Model.RequiredSkills) {
+                                    <span class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-secondary shadow-sm print:border-slate-300 print:text-black">@skill</span>
+                                }
+                            </div>
+                        </section>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Requirements)) {
+                        <section>
+                            <div class="bg-secondary rounded-[3rem] p-10 lg:p-14 text-white shadow-2xl spec-box relative overflow-hidden">
+                                <h3 class="text-xl font-bold mb-8 flex items-center gap-3 print:text-lg">
+                                    <i data-lucide="check-square" class="w-6 h-6 text-primary print:hidden"></i> Mandatory Selection Criteria
+                                </h3>
+                                <div class="prose prose-invert max-w-none prose-li:text-slate-300 prose-p:text-slate-300 print:text-black print:prose-slate">
+                                    @MarkdownRenderer.Parse(Model.Requirements)
+                                </div>
+                            </div>
+                        </section>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Benefits)) {
+                        <section>
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3 print:text-black">
+                                <span class="w-8 h-[2px] bg-primary print:hidden"></span> Benefits & Compensation
+                            </h3>
+                            <div class="prose prose-slate max-w-none print:text-sm print:text-black">
+                                @MarkdownRenderer.Parse(Model.Benefits)
+                            </div>
+                        </section>
+                    }
+                </div>
+
+                <!-- PRINT ONLY LEGAL FOOTER -->
+                <div class="hidden print:block pt-16 border-t border-slate-200 text-[10px] text-slate-400 uppercase font-bold tracking-widest leading-relaxed">
+                    This specification is generated for recruitment purposes. Merit assessment will be based strictly on 
+                    verified bio-data submitted via the 8-page verified form. Accuracy is mandatory.
+                </div>
+            </div>
+
+            <!-- SIDEBAR: ACTIONS (HIDDEN ON PRINT) -->
+            <aside class="lg:col-span-4 print:hidden">
+                <div class="sticky top-24 space-y-6">
+                    <div class="bg-white border border-slate-200 rounded-[3rem] p-10 shadow-xl shadow-slate-200/40">
+                        <div class="text-center mb-10">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Closing Window</p>
+                            @if (Model.IsExpired) {
+                                <div class="bg-red-50 text-red-600 px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-red-100">Portal Closed</div>
+                            } else {
+                                <div class="text-4xl font-black text-secondary tracking-tighter">
+                                    @timeLeft.Days Days <span class="text-primary text-xs uppercase tracking-widest ml-1">Left</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 font-bold mt-2 uppercase tracking-tighter">Deadline: @Model.ExpiresAt.ToString("MMM dd")</p>
+                            }
+                        </div>
+
+                        @if (!Model.IsExpired) {
+                            <a asp-area="Candidate" asp-controller="Wizard" asp-action="Apply" asp-route-jobId="@Model.Id" 
+                               class="block w-full bg-primary text-white text-center py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/30 hover:bg-secondary transition-all active:scale-95">
+                                Begin Application
+                            </a>
+                            <div class="mt-8 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex gap-3">
+                                <i data-lucide="info" class="w-4 h-4 text-primary shrink-0"></i>
+                                <p class="text-[10px] text-slate-500 leading-relaxed font-medium">Verified 8-page profile required for this role.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </aside>
+
+        </div>
+    </div>
+</div>
