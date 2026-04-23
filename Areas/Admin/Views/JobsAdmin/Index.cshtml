@@ -1,0 +1,179 @@
+@model Career635.Areas.Admin.Models.AdminJobIndexViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Vacancy Registry";
+}
+
+<div class="space-y-10 pb-20">
+    
+    <!-- 1. TOP COMMAND BAR -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 print:hidden">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Vacancy Registry</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-3">Requisition Lifecycle & Merit Management</p>
+        </div>
+        
+        <a asp-area="Admin" asp-controller="JobsAdmin" asp-action="Create" 
+           class="flex items-center gap-3 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-slate-900 transition-all active:scale-95">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Establish Vacancy
+        </a>
+    </div>
+
+    <!-- 2. DYNAMIC FILTER HUD -->
+    <form method="get" asp-action="Index" class="bg-white p-4 rounded-[2rem] border border-slate-200 shadow-sm flex flex-wrap items-center gap-4 no-print">
+        <!-- Search Input -->
+        <div class="flex-1 min-w-[280px] relative group">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-emerald-500 transition-colors"></i>
+            <input name="searchTerm" value="@Model.SearchTerm" type="text" placeholder="Search by Designation..." 
+                   class="w-full bg-slate-50 border-none rounded-xl pl-11 pr-4 py-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all" />
+        </div>
+        
+        <!-- Category Filter -->
+        <select name="category" class="bg-slate-50 border-none rounded-xl px-6 py-3 text-[10px] font-black uppercase text-slate-500 outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer">
+            <option value="">All Categories</option>
+            @foreach(var cat in Model.AvailableCategories) {
+                <option value="@cat" selected="@(Model.CategoryFilter == cat)">@cat</option>
+            }
+        </select>
+
+        <!-- Status Filter -->
+        <select name="status" class="bg-slate-50 border-none rounded-xl px-6 py-3 text-[10px] font-black uppercase text-slate-500 outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer">
+            <option value="">All Statuses</option>
+            <option value="Published" selected="@(Model.StatusFilter == "Published")">Published</option>
+            <option value="Draft" selected="@(Model.StatusFilter == "Draft")">Draft</option>
+            <option value="Closed" selected="@(Model.StatusFilter == "Closed")">Closed</option>
+        </select>
+        
+        <!-- Submit Action -->
+        <button type="submit" class="px-8 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all">
+            Update View
+        </button>
+        
+        <!-- Reset Action -->
+        @if(!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.CategoryFilter)) {
+            <a asp-action="Index" class="p-3 bg-slate-50 text-slate-300 rounded-xl hover:text-red-500 transition-colors" title="Clear All Filters">
+                <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
+            </a>
+        }
+    </form>
+
+    <!-- 3. REGISTRY TABLE -->
+    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100">
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Requisition Details</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Batch/Campaign</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Applicants</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Deadlines</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="px-10 py-20 text-center">
+                                <div class="max-w-xs mx-auto">
+                                    <i data-lucide="inbox" class="w-12 h-12 text-slate-100 mx-auto mb-4"></i>
+                                    <p class="text-sm font-bold text-slate-300 uppercase tracking-widest">No matching requisitions in registry</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var job in Model.Items)
+                    {
+                        <tr class="hover:bg-slate-50/30 transition-colors group">
+                            <td class="px-10 py-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-xl @(job.IsFeatured ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200" : "bg-slate-50 text-slate-300") flex items-center justify-center border border-slate-100 transition-all">
+                                        <i data-lucide="@(job.IsFeatured ? "star" : "briefcase")" class="w-4 h-4 @(job.IsFeatured ? "fill-current" : "")"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-black text-slate-800 group-hover:text-emerald-600 transition-colors">@job.Title</p>
+                                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter mt-1">@job.JobCategory</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <span class="text-xs font-bold text-slate-500">@(job.CampaignName ?? "Independent")</span>
+                            </td>
+                            <td class="px-6 py-6 text-center">
+                                <div class="inline-flex items-center gap-2">
+                                    <span class="text-sm font-black text-slate-800">@job.ApplicantCount</span>
+                                    <span class="text-[9px] text-slate-400 font-bold uppercase">Dossiers</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <div class="space-y-1">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase leading-none">Ends: @job.ExpiresAt.ToString("MMM dd")</p>
+                                    <p class="text-[9px] text-slate-300 font-medium">Posted: @job.PostedAt.ToString("MMM dd")</p>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                @{
+                                    var statusClass = job.Status switch {
+                                        "Published" => "bg-emerald-50 text-emerald-600 border-emerald-100",
+                                        "Draft" => "bg-slate-100 text-slate-500 border-slate-200",
+                                        "Closed" => "bg-red-50 text-red-600 border-red-100",
+                                        _ => "bg-slate-50 text-slate-400 border-slate-100"
+                                    };
+                                }
+                                <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border @statusClass">
+                                    @job.Status
+                                </span>
+                            </td>
+                            <td class="px-10 py-6 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a href="/Admin/JobsAdmin/Edit/@job.Id" title="Edit Requisition" class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 4. PAGINATION FOOTER -->
+        <div class="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-6">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                Registry Page @Model.PageNumber <span class="mx-2 text-slate-200">/</span> @Model.TotalPages
+            </p>
+            
+            <div class="flex gap-3">
+                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, status = Model.StatusFilter, category = Model.CategoryFilter, pageNumber = Model.PageNumber - 1 })" 
+                   class="pag-btn @(Model.HasPreviousPage ? "" : "disabled")" title="Previous Page">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </a>
+                
+                <div class="flex gap-1">
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        if (i == Model.PageNumber) {
+                            <span class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xs font-black shadow-lg shadow-emerald-100">@i</span>
+                        } else if (i <= 3 || i >= Model.TotalPages - 2 || (i >= Model.PageNumber - 1 && i <= Model.PageNumber + 1)) {
+                            <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, status = Model.StatusFilter, category = Model.CategoryFilter, pageNumber = i })" 
+                               class="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-400 flex items-center justify-center text-xs font-bold hover:border-emerald-600 hover:text-emerald-600 transition-all">@i</a>
+                        }
+                    }
+                </div>
+
+                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, status = Model.StatusFilter, category = Model.CategoryFilter, pageNumber = Model.PageNumber + 1 })" 
+                   class="pag-btn @(Model.HasNextPage ? "" : "disabled")" title="Next Page">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pag-btn { @@apply w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:border-emerald-600 hover:text-emerald-600 transition-all shadow-sm; }
+    .pag-btn.disabled { @@apply opacity-20 pointer-events-none grayscale bg-slate-50; }
+</style>
+
+

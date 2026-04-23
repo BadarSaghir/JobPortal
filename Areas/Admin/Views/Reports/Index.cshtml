@@ -1,0 +1,137 @@
+@model Career635.Areas.Admin.Models.ReportDashboardViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Merit Analytics";
+}
+
+<div class="space-y-10 pb-20">
+    
+    <!-- 1. HEADER & PRINT -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">Merit Analytics</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Quantitative recruitment performance metrics</p>
+        </div>
+        <button onclick="window.print()" class="no-print flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-600 transition-all">
+            <i data-lucide="printer" class="w-4 h-4"></i> Generate PDF Report
+        </button>
+    </div>
+
+    <!-- 2. HIGH-LEVEL KPI STRIP -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Aggregate Dossiers</p>
+            <h3 class="text-5xl font-black text-slate-900">@Model.TotalApplications</h3>
+            <div class="absolute bottom-0 right-0 p-6 opacity-[0.03]"><i data-lucide="users" class="w-20 h-20"></i></div>
+        </div>
+        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Shortlist Rate</p>
+            <div class="flex items-end gap-4">
+                <h3 class="text-5xl font-black text-emerald-600">@((Model.TotalApplications > 0 ? (Model.ShortlistedCount * 100 / Model.TotalApplications) : 0))%</h3>
+                <p class="text-xs font-bold text-slate-400 mb-2 uppercase">of total entries</p>
+            </div>
+        </div>
+        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Rejection Rate</p>
+            <div class="flex items-end gap-4">
+                <h3 class="text-5xl font-black text-red-500">@((Model.TotalApplications > 0 ? (Model.RejectedCount * 100 / Model.TotalApplications) : 0))%</h3>
+                <p class="text-xs font-bold text-slate-400 mb-2 uppercase">of total entries</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ANALYTICS CHARTS -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Application Trend (8 Units) -->
+        <div class="lg:col-span-8 bg-white rounded-[3rem] border border-slate-200 p-10 shadow-sm">
+            <h4 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-10 flex items-center gap-2">
+                <i data-lucide="line-chart" class="w-4 h-4 text-emerald-600"></i> Personnel Acquisition Trend
+            </h4>
+            <canvas id="trendChart" height="120"></canvas>
+        </div>
+
+        <!-- Distribution (4 Units) -->
+        <div class="lg:col-span-4 bg-white rounded-[3rem] border border-slate-200 p-10 shadow-sm">
+            <h4 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-10">Education Profile</h4>
+            <div class="space-y-8">
+                @foreach (var edu in Model.EducationStats.Take(5))
+                {
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-[10px] font-bold uppercase tracking-tighter">
+                            <span class="text-slate-600">@edu.Level</span>
+                            <span class="text-slate-900">@edu.Count (@edu.Percentage.ToString("F1")%)</span>
+                        </div>
+                        <div class="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-500 rounded-full" style="width: @edu.Percentage%"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. JOB PERFORMANCE REGISTRY -->
+    <div class="bg-white rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-10 border-b border-slate-50">
+            <h4 class="text-sm font-black text-slate-900 uppercase tracking-widest">Requisition Engagement (Top 5)</h4>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50/50">
+                    <tr>
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Vacancy Title</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Dossiers Received</th>
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Engagement</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach (var job in Model.TopJobs)
+                    {
+                        <tr>
+                            <td class="px-10 py-6 text-sm font-black text-slate-800">@job.Title</td>
+                            <td class="px-6 py-6 text-center">
+                                <span class="text-sm font-black text-slate-900">@job.ApplicationCount</span>
+                            </td>
+                            <td class="px-10 py-6 text-right">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black">
+                                    <i data-lucide="trending-up" class="w-3 h-3"></i> High
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart.min.js"></script>
+    <script>
+        // 1. Trend Chart Data
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.ApplicationTrend.Select(t => t.Date))),
+                datasets: [{
+                    label: 'Submissions',
+                    data: @Html.Raw(Json.Serialize(Model.ApplicationTrend.Select(t => t.Count))),
+                    borderColor: '#10b981', // Emerald 500
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 4,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { display: false, beginAtZero: true },
+                    x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } }
+                }
+            }
+        });
+    </script>
+}

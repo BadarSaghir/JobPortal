@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Career 635 | Specialized Recruitment Portal</title>
+    <meta name="description" content="Official centralized job application portal for specialized roles. Secure your professional future with Career 635." />
+    
+    <!-- Local Compiled Tailwind v4 -->
+    <link rel="stylesheet" href="~/dist/style.css" asp-append-version="true" />
+        @RenderSection("Styles", required: false)
+
+</head>
+<body class="bg-slate-50 font-sans antialiased text-slate-900">
+
+    <!-- COMPACT STICKY HEADER -->
+    <header class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 print:hidden">
+        <nav class="container mx-auto px-6 h-16 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2 group">
+                <div class="bg-secondary p-1.5 rounded-lg group-hover:bg-primary transition-colors">
+                    <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-black tracking-tighter text-secondary uppercase">
+                    Career<span class="text-primary">635</span>
+                </span>
+            </a>
+
+            <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+                <a href="/Search" class="hover:text-primary transition-colors">Browse Roles</a>
+                <a href="/Track" class="hover:text-primary transition-colors">Track</a>
+            </div>
+
+            @* <a  href="/Account/Login" 
+               class="bg-primary text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-secondary transition-all">
+                Login
+            </a> *@
+        </nav>
+    </header>
+
+    <main class="pt-16 print:pt-0">
+        @RenderBody()
+    </main>
+
+    <!-- PROFESSIONAL SEO & LEGAL FOOTER -->
+    <footer class="bg-white border-t border-slate-200 mt-20 pt-16 pb-8 print:hidden">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-1 md:col-span-2">
+                    <span class="text-lg font-black text-secondary tracking-tighter uppercase mb-4 block">Career<span class="text-primary">635</span></span>
+                    <p class="text-slate-500 text-sm leading-relaxed max-w-md">
+                        Career 635 is the dedicated human resource gateway for our group of companies. We operate with strict confidentiality to protect both candidate privacy and organizational integrity.
+                    </p>
+                </div>
+            
+            </div>
+
+            <!-- THE "NO SUE" LEGAL DISCLAIMER STRIP -->
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-8 text-[11px] text-slate-400 leading-relaxed italic">
+                <strong>Disclaimer:</strong> Career 635 acts as an independent application routing system. The submission of an application does not constitute a contract of employment or a guarantee of an interview. We reserve the right to modify job requirements or withdraw postings at any time without prior notice. By using this portal, you agree that your data will be processed according to our internal security protocols. 
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-slate-100 gap-4">
+                <p class="text-xs text-slate-400">© @DateTime.Now.Year Career 635. All rights reserved.</p>
+                <div class="flex items-center gap-2 text-[10px] text-slate-300 font-bold uppercase tracking-widest">
+                    <i data-lucide="shield" class="w-3 h-3"></i> Encrypted Connection Verified
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Local Lucide Icons -->
+    <script src="~/lib/lucide.min.js"></script>
+    <script>lucide.createIcons();</script>
+    @RenderSection(name: "Scripts", required: false)
+
+</body>
+</html>

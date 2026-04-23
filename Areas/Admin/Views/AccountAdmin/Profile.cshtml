@@ -1,0 +1,95 @@
+@model Career635.Areas.Admin.Models.UserProfileViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="max-w-5xl mx-auto space-y-10 pb-20">
+    
+    <!-- HEADER -->
+    <div class="flex justify-between items-end">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">My Identity</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Authorized personnel profile</p>
+        </div>
+        <div class="p-2 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Session Secure</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        
+        <!-- LEFT: BIO CARD -->
+        <div class="space-y-6">
+            <div class="bg-white rounded-[3rem] border border-slate-200 p-10 text-center shadow-sm relative overflow-hidden">
+                <div class="w-32 h-32 rounded-[2rem] bg-secondary flex items-center justify-center text-primary text-4xl font-black mx-auto mb-6 shadow-xl shadow-black/10">
+                    @Model.FullName.Substring(0, 1).ToUpper()
+                </div>
+                <h2 class="text-2xl font-black text-slate-900 leading-tight">@Model.FullName</h2>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">@Model.Email</p>
+                
+                <div class="mt-8 pt-8 border-t border-slate-50 space-y-4">
+                    <button class="w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all">Edit Basic Info</button>
+                    <button class="w-full py-3 bg-white border border-slate-200 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-red-500 hover:text-red-500 transition-all">Reset Password</button>
+                </div>
+            </div>
+
+            <!-- SECURITY STATS -->
+            <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white">
+                <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-6">Access Group</h3>
+                <div class="flex flex-wrap gap-2">
+                    @foreach(var role in Model.Roles) {
+                        <span class="px-3 py-1 bg-white/10 rounded-lg text-[9px] font-black uppercase tracking-tighter">@role</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: LOCAL INFO & PERMISSIONS -->
+        <div class="lg:col-span-2 space-y-8">
+            
+            <!-- LOCAL INFO PANEL -->
+            <div class="bg-white rounded-[3rem] border border-slate-200 p-10 lg:p-14 shadow-sm">
+                <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-10 flex items-center gap-2">
+                    <i data-lucide="building-2" class="w-4 h-4"></i> Organizational Logistics
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assigned Designation</label>
+                        <p class="text-lg font-black text-slate-900">@(Model.Designation ?? "Not Specified")</p>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Operation Unit</label>
+                        <p class="text-lg font-black text-slate-900">@(Model.Department ?? "Headquarters")</p>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Personnel Grade</label>
+                        <p class="text-lg font-black text-slate-900">@(Model.PayScale ?? "N/A")</p>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Onboarding Date</label>
+                        <p class="text-lg font-black text-slate-900">@Model.CreatedAt.ToString("dd MMM yyyy")</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERMISSIONS CLOUD -->
+            <div class="bg-white rounded-[3rem] border border-slate-200 p-10 lg:p-14 shadow-sm">
+                <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-10 flex items-center gap-2">
+                    <i data-lucide="key" class="w-4 h-4"></i> System Privileges
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach(var perm in Model.Permissions) {
+                        <div class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>
+                            <span class="text-[11px] font-bold text-slate-700 uppercase tracking-tight">@perm</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

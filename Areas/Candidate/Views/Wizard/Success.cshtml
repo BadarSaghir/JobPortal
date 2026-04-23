@@ -1,0 +1,83 @@
+@model string
+@{
+    Layout = "_CandidateLayout";
+    ViewData["Title"] = "Application Submitted Successfully";
+    var trackingCode = Context.Request.Query["code"];
+}
+
+<div class="max-w-2xl mx-auto py-10">
+    <div class="bg-white rounded-[3rem] border border-slate-200 p-10 md:p-16 shadow-2xl shadow-slate-100 text-center relative overflow-hidden">
+        
+        <!-- Background Decoration -->
+        <div class="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none  print:hidden">
+            <i data-lucide="shield-check" class="w-64 h-64"></i>
+        </div>
+
+        <!-- Success Icon -->
+        <div class="w-20 h-20 bg-emerald-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-emerald-100">
+            <i data-lucide="check-circle-2" class="w-10 h-10 text-emerald-600"></i>
+        </div>
+
+        <h1 class="text-4xl font-black text-slate-900 tracking-tighter mb-4">Submission Received.</h1>
+        <p class="text-slate-500 font-light text-lg mb-12">Your 8-page bio-data dossier has been successfully encrypted and queued for merit-based screening.</p>
+
+        <!-- TRACKING BOX -->
+        <div class="bg-slate-900 rounded-[2.5rem] p-10 text-white mb-10  print:shadow-none shadow-xl relative group">
+            <p class="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-4">Unique Tracking Identity</p>
+            <div class="flex items-center justify-center gap-4">
+                <span class="text-4xl md:text-5xl font-mono font-black tracking-widest text-white">
+                    @trackingCode
+                </span>
+                <button onclick="copyTrackingCode('@trackingCode')" class="p-2 hover:bg-white/10 rounded-lg transition-colors  print:hidden" title="Copy to clipboard">
+                    <i data-lucide="copy" class="w-5 h-5 text-slate-400"></i>
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-500 mt-6 uppercase font-bold tracking-widest leading-relaxed">
+                Save this code. It is required to check your status <br/> during the recruitment phases.
+            </p>
+        </div>
+
+        <!-- INSTRUCTIONS -->
+        <div class="text-left space-y-6 mb-12 px-4">
+            <div class="flex gap-4">
+                <i data-lucide="search" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+                <div>
+                    <h4 class="text-sm font-bold text-slate-900">Merit Screening</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">Our automated system will now compare your verified bio-data against the role requirements.</p>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <i data-lucide="mail" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+                <div>
+                    <h4 class="text-sm font-bold text-slate-900">Contact Protocol</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">Only shortlisted candidates meeting the experience threshold will be contacted via provided contact details.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center pt-8 border-t border-slate-50  print:hidden">
+            <a href="/" class="px-10 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">
+                Return to Portal
+            </a>
+            <button onclick="window.print()" class="px-10 py-4 border-2 border-emerald-600 text-emerald-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-50 transition-all">
+                Print Receipt
+            </button>
+        </div>
+    </div>
+
+    <!-- SECURITY FOOTNOTE -->
+    <p class="text-center mt-10  print:hidden text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+        <i data-lucide="lock" class="w-3 h-3"></i> Secure SSL Encrypted Submission Verified
+    </p>
+</div>
+
+@section Scripts {
+    <script>
+        function copyTrackingCode(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Tracking code copied to clipboard!");
+            });
+        }
+    </script>
+}

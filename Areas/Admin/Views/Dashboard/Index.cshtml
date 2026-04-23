@@ -1,0 +1,101 @@
+@model Career635.Areas.Admin.Models.DashboardViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Command Center";
+}
+
+<div class="space-y-10">
+    <!-- 1. STATS HUD -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        @foreach (var stat in new[] {
+            new { L = "Live Roles", V = Model.TotalActiveJobs, I = "briefcase", C = "text-blue-500", B = "bg-blue-500/10" },
+            new { L = "Total Dossiers", V = Model.TotalApplications, I = "users", C = "text-emerald-500", B = "bg-emerald-500/10" },
+            new { L = "Pending Audit", V = Model.PendingReviews, I = "clock", C = "text-amber-500", B = "bg-amber-500/10" },
+            new { L = "Shortlisted", V = Model.ShortlistedCount, I = "check-circle", C = "text-purple-500", B = "bg-purple-500/10" }
+        }) {
+            <div class="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-xl @stat.B flex items-center justify-center @stat.C">
+                        <i data-lucide="@stat.I" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">@stat.L</span>
+                </div>
+                <p class="text-4xl font-black text-slate-900 tracking-tighter">@stat.V</p>
+            </div>
+        }
+    </div>
+
+    <!-- 2. DATA REGISTRY -->
+    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        
+        <!-- Header & Search -->
+        <div class="p-8 border-b border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6">
+            <h3 class="text-lg font-black text-slate-900 uppercase tracking-tighter">Personnel Submissions</h3>
+            
+            <form method="get" class="w-full md:w-96 relative">
+                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300"></i>
+                <input name="searchTerm" value="@Model.SearchTerm" type="text" placeholder="Search Identity or Tracking ID..." 
+                       class="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-4 py-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20" />
+            </form>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-slate-50/50">
+                        <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Candidate Identity</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Role</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Identity Code</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Phase</th>
+                        <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach (var app in Model.RecentApplications) {
+                        <tr class="hover:bg-slate-50/30 transition-colors group">
+                            <td class="px-8 py-6">
+                                <p class="text-sm font-black text-slate-800">@app.ApplicantName</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">@app.AppliedAt.ToString("MMM dd, yyyy")</p>
+                            </td>
+                            <td class="px-6 py-6 text-xs font-bold text-slate-600">@app.JobTitle</td>
+                            <td class="px-6 py-6 text-center font-mono text-[11px] font-black text-emerald-600">@app.TrackingCode</td>
+                            <td class="px-6 py-6">
+                                <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border 
+                                    @(app.Status == "Pending" ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-emerald-50 text-emerald-600 border-emerald-100")">
+                                    @app.Status
+                                </span>
+                            </td>
+                            <td class="px-8 py-6 text-right">
+                                <a href="/Admin/Applications/Review/@app.ApplicationId" class="inline-flex w-10 h-10 rounded-xl bg-slate-100 items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+                                    <i data-lucide="file-search-2" class="w-4 h-4"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. PAGINATION FOOTER -->
+        <div class="p-8 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Page @Model.PageNumber of @Model.TotalPages
+            </p>
+            <div class="flex gap-2">
+                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, pageNumber = Model.PageNumber - 1 })" 
+                   class="pag-btn @(Model.HasPreviousPage ? "" : "disabled")">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </a>
+                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, pageNumber = Model.PageNumber + 1 })" 
+                   class="pag-btn @(Model.HasNextPage ? "" : "disabled")">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pag-btn { @@apply w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:border-emerald-600 hover:text-emerald-600 transition-all shadow-sm; }
+    .pag-btn.disabled { @@apply opacity-20 pointer-events-none grayscale bg-slate-50; }
+</style>

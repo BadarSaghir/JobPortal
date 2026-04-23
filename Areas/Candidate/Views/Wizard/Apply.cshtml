@@ -1,0 +1,616 @@
+@model Career635.Areas.Candidate.Models.ApplicationSubmitViewModel
+
+@{
+    ViewData["Title"] = "Job Application Portal";
+}
+
+@section Styles {
+    <style>
+        .wizard-panel { display: none; opacity: 0; transform: translateY(10px); transition: all 0.4s ease; }
+        .wizard-panel.active { display: block; opacity: 1; transform: translateY(0); }
+        .form-input { width: 100%; border-radius: 0.75rem; border: 1px solid #e2e8f0; background-color: #f8fafc; padding: 0.65rem 1rem; font-size: 0.85rem; transition: all 0.2s; }
+        .form-input:focus { background-color: #fff; border-color: #3b82f6; outline: none; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        .repeater-card { background: #fff; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-radius: 1rem; padding: 1.25rem; position: relative; margin-bottom: 1rem; border-left: 4px solid #3b82f6; }
+        .section-label { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; display: block; }
+        .input-validation-error { border-color: #ef4444 !important; background-color: #fffafb !important; }
+    </style>
+}
+
+<div class="max-w-6xl mx-auto py-8 px-4">
+    <div class="mb-8 text-center md:text-left">
+        <h1 class="text-3xl font-black text-slate-900">Job Application Portal</h1>
+        <p class="text-slate-500 text-sm">Please provide accurate information. Core identity details are mandatory.</p>
+    </div>
+
+    <form id="applicationForm" asp-action="Submit" enctype="multipart/form-data" method="post">
+        <input type="hidden" asp-for="JobId" />
+        
+        <div asp-validation-summary="ModelOnly" class="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm"></div>
+
+        <!-- STEP 1: IDENTITY -->
+        <div class="wizard-panel active" id="step-1">
+            <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm">
+                <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="user" class="text-blue-500"></i> 1. Personal Identity</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="md:col-span-2">
+                        <label asp-for="FullName" class="section-label">Full Name *</label>
+                        <input asp-for="FullName" class="form-input" required />
+                        <span asp-validation-for="FullName" class="text-red-500 text-[10px]"></span>
+                    </div>
+                    <div>
+                        <label asp-for="CNICNumber" class="section-label">CNIC Number *</label>
+                        <input asp-for="CNICNumber" class="form-input" placeholder="00000-0000000-0" required />
+                        <span asp-validation-for="CNICNumber" class="text-red-500 text-[10px]"></span>
+                    </div>
+                    <div><label asp-for="FatherName" class="section-label">Father's Name *</label><input asp-for="FatherName" class="form-input" /></div>
+                    <div><label asp-for="FatherCNIC" class="section-label">Father's CNIC</label><input asp-for="FatherCNIC" class="form-input" /></div>
+                    <div><label asp-for="DateOfBirth" class="section-label">Date of Birth *</label><input asp-for="DateOfBirth" type="text" class="datepicker form-input" /></div>
+                    <div><label asp-for="Gender" class="section-label">Gender</label><select asp-for="Gender" class="form-input"><option value="Male">Male</option><option value="Female">Female</option></select></div>
+                    <div><label asp-for="MaritalStatus" class="section-label">Marital Status</label>
+                    <select asp-for="MaritalStatus" class="form-input"><option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Widow">Widow</option>
+                    <option value="Divorced">Divorced</option>
+                    <option value="Separated">Separated</option>
+                    </select></div>
+
+<div><label asp-for="Religion" class="section-label">Religion</label>
+                    <select asp-for="Religion" class="form-input"><option value="Muslim">Muslim</option>
+                    <option value="Christian">Christian</option>
+                    <option value="Sikh">Sikh</option>
+                    <option value="Hindu">Hindu</option>
+                    <option value="Others">Others</option>
+                    </select></div>
+
+                    @* <div><label asp-for="Religion" class="section-label">Religion</label><input asp-for="Religion" class="form-input" />
+                    </div> *@
+                    <div><label asp-for="Caste" class="section-label">Caste</label><input asp-for="Caste" class="form-input" /></div>
+                    <div><label asp-for="Sect" class="section-label">Sect</label><input asp-for="Sect" class="form-input" /></div>
+                    <div><label asp-for="PECNumber" class="section-label">PEC Number</label><input asp-for="PECNumber" class="form-input" /></div>
+                    <div><label asp-for="ContactNo" class="section-label">Mobile *</label><input asp-for="ContactNo" class="form-input" /></div>
+                    <div><label asp-for="Email" class="section-label">Email</label><input asp-for="Email" type="email" class="form-input" /></div>
+                    <div><label asp-for="CandidateType" class="section-label">Type</label>
+                    <select asp-for="CandidateType" class="form-input"><option value="Candidate">Candidate</option>
+                    @* <option value="Internal">Internal</option> *@
+                    </select>
+                    </div>
+                    <div><label asp-for="Accommodation" class="section-label">Accommodation</label><input asp-for="Accommodation" class="form-input" /></div>
+                    <div class="md:col-span-3"><label asp-for="PresentAddress" class="section-label">Present Address *</label><textarea asp-for="PresentAddress" rows="2" class="form-input"></textarea></div>
+                    <div class="md:col-span-3"><label asp-for="PermanentAddress" class="section-label">Permanent Address *</label><textarea asp-for="PermanentAddress" rows="2" class="form-input"></textarea></div>
+                </div>
+            </div>
+            <div class="flex justify-end mt-8"><button type="button" class="btn-next bg-blue-600 text-white font-bold py-4 px-10 rounded-2xl">Next Step</button></div>
+        </div>
+
+        <!-- STEP 2: FAMILY & SIBLINGS -->
+        <div class="wizard-panel" id="step-2">
+            <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm mb-8">
+                <h3 class="text-xl font-bold text-slate-800 mb-6">2. Family Summary</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Brothers -->
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                        <span class="section-label mb-3">Brothers Counts</span>
+                        <div class="flex gap-2 justify-center">
+                            <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">TOTAL</span><input asp-for="BrothersTotal" class="form-input text-center" /></div>
+                            <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">MARRIED</span><input asp-for="BrothersMarried" class="form-input text-center" /></div>
+                            <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">UNMARR</span><input asp-for="BrothersUnmarried" class="form-input text-center" /></div>
+                        </div>
+                    </div>
+                    <!-- Sisters -->
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                        <span class="section-label mb-3">Sisters Counts</span>
+                        <div class="flex gap-2 justify-center">
+                            <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">TOTAL</span><input asp-for="SistersTotal" class="form-input text-center" /></div>
+                            <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">MARRIED</span><input asp-for="SistersMarried" class="form-input text-center" /></div>
+                            <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">UNMARR</span><input asp-for="SistersUnmarried" class="form-input text-center" /></div>
+                        </div>
+                    </div>
+                    <!-- Children -->
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                        <span class="section-label mb-3">Children Counts</span>
+                        <div class="flex gap-2 justify-center">
+                            <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">TOTAL</span><input asp-for="ChildrenTotal" class="form-input text-center" /></div>
+                            <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">MARRIED</span><input asp-for="ChildrenMarried" class="form-input text-center" /></div>
+                            <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">UNMARR</span><input asp-for="ChildrenUnmarried" class="form-input text-center" /></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-10">
+                <div class="flex justify-between items-center mb-4"><h4 class="font-bold text-slate-700">Sibling Details</h4><button type="button" onclick="addDynamicRow('sib-container', 'sib-template', 'Siblings')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg">+ ADD SIBLING</button></div>
+                <div id="sib-container" class="space-y-4">
+                    @for (int i = 0; i < Model.Siblings.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'sib-container', 'Siblings')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
+                                
+                                <input name="Siblings[@i].Name" value="@Model.Siblings[i].Name" class="form-input" placeholder="Name" />
+
+                                <input name="Siblings[@i].CNIC" value="@Model.Siblings[i].CNIC" class="form-input" placeholder="CNIC" />
+                                <select name="Siblings[@i].Gender" class="form-input w-32">
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    @* <option value="Other">Other</option> *@
+                                </select>
+      <select name="Siblings[@i].MaritalStatus" class="form-input w-32">
+                                  <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Widow">Widow</option>
+                    <option value="Divorced">Divorced</option>
+                    <option value="Separated">Separated</option>
+                                    @* <option value="Other">Other</option> *@
+                                </select>
+                                <input name="Siblings[@i].DateOfBirth" value="@Model.Siblings[i].DateOfBirth.ToString("yyyy-MM-dd")" class="datepicker form-input" placeholder="DOB" />
+                                
+                                <input name="Siblings[@i].Occupation" value="@Model.Siblings[i].Occupation" class="form-input" placeholder="Occupation" />
+                                
+                                <input name="Siblings[@i].Organization" value="@Model.Siblings[i].Organization" class="form-input" placeholder="Organization" />
+
+                                       <input name="Siblings[@i].Designation" value="@Model.Siblings[i].Designation" class="form-input" placeholder="Designation" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="flex justify-between"><button type="button" class="btn-prev border px-8 py-3 rounded-xl">Back</button><button type="button" class="btn-next bg-blue-600 text-white px-8 py-3 rounded-xl">Continue</button></div>
+        </div>
+
+        <!-- STEP 3: ACADEMIC & EMPLOYMENT -->
+        <div class="wizard-panel" id="step-3">
+            <div class="mb-10">
+                <div class="flex justify-between items-center mb-4"><h4 class="font-bold text-slate-700">Academic History</h4><button type="button" onclick="addDynamicRow('edu-container', 'edu-template', 'Educations')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg">+ ADD EDUCATION</button></div>
+                <div id="edu-container" class="space-y-4">
+                    @for (int i = 0; i < Model.Educations.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'edu-container', 'Educations')" class="absolute top-3 right-3 text-red-400 font-bold">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                <input name="Educations[@i].Qualification" value="@Model.Educations[i].Qualification" class="form-input" placeholder="Qualification (e.g. BSCS)" />
+                                <input name="Educations[@i].MajorField" value="@Model.Educations[i].MajorField" class="form-input" placeholder="Major Field" />
+                                <input name="Educations[@i].BoardUniversity" value="@Model.Educations[i].BoardUniversity" class="form-input" placeholder="University" />
+                                <input name="Educations[@i].CgpaPercentage" value="@Model.Educations[i].CgpaPercentage" class="form-input" placeholder="CGPA/Percentage" />
+                                <input name="Educations[@i].FromDate" value="@Model.Educations[i].FromDate.ToString("yyyy-MM-dd")" class="datepicker form-input" placeholder="From Date" />
+                                <input name="Educations[@i].ToDate" value="@Model.Educations[i].ToDate.ToString("yyyy-MM-dd")" class="datepicker form-input" placeholder="To Date" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="mb-10">
+                <div class="flex justify-between items-center mb-4"><h4 class="font-bold text-slate-700">Work Experience</h4><button type="button" onclick="addDynamicRow('exp-container', 'exp-template', 'Experiences')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg">+ ADD EXPERIENCE</button></div>
+                <div id="exp-container" class="space-y-4">
+                    @for (int i = 0; i < Model.Experiences.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'exp-container', 'Experiences')" class="absolute top-3 right-3 text-red-400 font-bold">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <input name="Experiences[@i].OrganizationName" value="@Model.Experiences[i].OrganizationName" class="form-input" placeholder="Organization" />
+                                <input name="Experiences[@i].Designation" value="@Model.Experiences[i].Designation" class="form-input" placeholder="Designation" />
+                                <input name="Experiences[@i].FromDate" value="@Model.Experiences[i].FromDate.ToString("yyyy-MM-dd")" class="datepicker form-input" />
+                                <input name="Experiences[@i].ToDate" value="@Model.Experiences[i].ToDate?.ToString("yyyy-MM-dd")" class="datepicker form-input" />
+                                <textarea name="Experiences[@i].KeyResponsibilities" class="form-input col-span-2" placeholder="Key Responsibilities">@Model.Experiences[i].KeyResponsibilities</textarea>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="flex justify-between"><button type="button" class="btn-prev border px-8 py-3 rounded-xl">Back</button><button type="button" class="btn-next bg-blue-600 text-white px-8 py-3 rounded-xl">Continue</button></div>
+        </div>
+
+        <!-- STEP 4: SKILLS, CERTS, RELATIVES -->
+        <div class="wizard-panel" id="step-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div>
+                    <div class="flex justify-between mb-2"><span class="font-bold">Skills</span><button type="button" onclick="addDynamicRow('skill-container', 'skill-template', 'Skills')" class="text-blue-600 font-bold text-[10px]">+ ADD</button></div>
+                    <div id="skill-container" class="space-y-2">
+                        @for (int i = 0; i < Model.Skills.Count; i++) {
+                            <div class="flex gap-2" data-index="@i">
+                                <input name="Skills[@i].SkillName" value="@Model.Skills[i].SkillName" class="form-input" placeholder="Skill" />
+                                <select name="Skills[@i].Proficiency" class="form-input w-32">
+                                    <option>Beginner</option><option>Intermediate</option><option>Expert</option>
+                                </select>
+                                <button type="button" onclick="removeRow(this, 'skill-container', 'Skills')" class="text-red-500 font-bold px-2">×</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-2"><span class="font-bold">Certifications</span><button type="button" onclick="addDynamicRow('cert-container', 'cert-template', 'Certifications')" class="text-blue-600 font-bold text-[10px]">+ ADD</button></div>
+                    <div id="cert-container" class="space-y-2">
+                        @for (int i = 0; i < Model.Certifications.Count; i++) {
+                            <div class="flex gap-2" data-index="@i">
+                                <input name="Certifications[@i].CertificateName" value="@Model.Certifications[i].CertificateName" class="form-input" placeholder="Certificate Name" />
+                                <input name="Certifications[@i].IssuingBody" value="@Model.Certifications[i].IssuingBody" class="form-input" placeholder="Issuing Body" />
+                                <button type="button" onclick="removeRow(this, 'cert-container', 'Certifications')" class="text-red-500 font-bold px-2">×</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-10">
+                <div class="flex justify-between items-center mb-4"><h4 class="font-bold text-slate-700">Internal Relatives</h4><button type="button" onclick="addDynamicRow('rel-container', 'rel-template', 'InternalRelatives')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg">+ ADD RELATIVE</button></div>
+                <div id="rel-container" class="space-y-4">
+                    @for (int i = 0; i < Model.InternalRelatives.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'rel-container', 'InternalRelatives')" class="absolute top-3 right-3 text-red-400 font-bold">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                                <input name="InternalRelatives[@i].RelativeName" value="@Model.InternalRelatives[i].RelativeName" class="form-input" placeholder="Relative Name" />
+                                <input name="InternalRelatives[@i].Designation" value="@Model.InternalRelatives[i].Designation" class="form-input" placeholder="Designation" />
+                                <input name="InternalRelatives[@i].Department" value="@Model.InternalRelatives[i].Department" class="form-input" placeholder="Department" />
+                                <input name="InternalRelatives[@i].PayScale" value="@Model.InternalRelatives[i].PayScale" class="form-input" placeholder="Pay Scale" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="flex justify-between"><button type="button" class="btn-prev border px-8 py-3 rounded-xl">Back</button><button type="button" class="btn-next bg-blue-600 text-white px-8 py-3 rounded-xl">Continue</button></div>
+        </div>
+
+        <!-- STEP 5: ACHIEVEMENTS, MILITARY, FINANCE, UPLOADS -->
+        <div class="wizard-panel" id="step-5">
+            <div class="mb-8">
+                <div class="flex justify-between mb-4"><span class="font-bold">Professional Achievements</span><button type="button" onclick="addDynamicRow('ach-container', 'ach-template', 'Achievements')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg">+ ADD ACHIEVEMENT</button></div>
+                <div id="ach-container" class="space-y-4">
+                    @for (int i = 0; i < Model.Achievements.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'ach-container', 'Achievements')" class="absolute top-3 right-3 text-red-400 font-bold">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <input name="Achievements[@i].Title" value="@Model.Achievements[i].Title" class="form-input" placeholder="Achievement Title" />
+                                <input name="Achievements[@i].DateReceived" value="@Model.Achievements[i].DateReceived.ToString("yyyy-MM-dd")" class="datepicker form-input" />
+                                <textarea name="Achievements[@i].Description" class="form-input col-span-2" rows="1" placeholder="Short Description">@Model.Achievements[i].Description</textarea>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-slate-50 p-6 rounded-3xl border">
+                    <h4 class="font-bold mb-4">Military Detail (If Any)</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input asp-for="ArmyNumber" class="form-input" placeholder="Army Number" />
+                        <input asp-for="ArmyUnit" class="form-input" placeholder="Unit" />
+                        <input asp-for="ArmyCharacter" class="form-input" placeholder="Character" />
+                        <input asp-for="ArmyPayScale" class="form-input" placeholder="Pay Scale" />
+                    </div>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-3xl border">
+                    <h4 class="font-bold mb-4">Financials</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input asp-for="CurrentSalary" class="form-input" placeholder="Current Salary" />
+                        <input asp-for="ExpectedSalary" class="form-input" placeholder="Expected Salary" />
+                        @* <input asp-for="FamilyIncomeDetail" class="form-input col-span-2" placeholder="Monthly Family Income" /> *@
+
+                        <select aria-placeholder="FamilyIncomeDetail" name="FamilyIncomeDetail" class="form-input w-32">
+                                    <option>Less than 50k PKR</option>
+                                    <option>Between 50k and 1 Lac PKR</option>
+                                    <option>Between 1Lac and 1.5 Lac PKR</option>
+                                    <option>Between 2Lac and 3 Lac PKR</option>
+                                    <option>More the 3Lac PKR</option>
+                                </select>
+                        
+                        <input asp-for="OtherFacilities" class="form-input col-span-2" placeholder="Facilities" />
+                        @* OtherFacilitiesk *@
+                        <textarea asp-for="OtherBenefits" rows="1" class="form-input col-span-2" placeholder="Current Benefits (Car, Fuel, etc.)"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div class="space-y-2"><label class="section-label">Passport Photo (50KB max) *</label><input type="file" 
+                 @* accept="*.jpg,*.jpeg,*.png" *@
+                asp-for="PassportPhoto"
+                 class="filepond" required /></div>
+                <div class="space-y-2"><label class="section-label">Updated CV (PDF 50KB) *</label><input type="file"
+                 @* accept="*.pdf" *@
+                 asp-for="CvFile" class="filepond" required /></div>
+            </div>
+<div class="mb-10">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h4 class="font-bold text-slate-700">Supporting Documents</h4>
+            <p class="text-[10px] text-slate-500 uppercase font-bold">Max 50KB per file. Formats: PDF, JPG, PNG</p>
+        </div>
+        <button type="button" onclick="addDynamicRow('doc-container', 'doc-template', 'DocumentAttachments')" 
+                class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-4 py-2 rounded-lg hover:bg-emerald-100">
+            + ADD DOCUMENT TYPE
+        </button>
+    </div>
+    
+    <div id="doc-container" class="space-y-4">
+        <!-- Dynamic rows will appear here -->
+    </div>
+</div>
+            <div class="flex justify-between pt-8 border-t"><button type="button" class="btn-prev border px-8 py-3 rounded-xl">Back</button><button type="submit" class="bg-emerald-600 text-white font-black py-4 px-12 rounded-2xl shadow-xl hover:bg-emerald-700 transition-all">Submit Application</button></div>
+        </div>
+    </form>
+</div>
+
+<!-- =============================================
+     TEMPLATES (Hidden Blueprints)
+     ============================================= -->
+
+<template id="sib-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'sib-container', 'Siblings')" class="absolute top-3 right-3 text-red-400 font-bold">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
+            <input name="Siblings[{idx}].Name" class="form-input" placeholder="Name" />
+            <input name="Siblings[{idx}].CNIC" class="form-input" placeholder="CNIC" />
+            <input name="Siblings[{idx}].DateOfBirth" class="datepicker form-input" placeholder="DOB" />
+            <input name="Siblings[{idx}].Occupation" class="form-input" placeholder="Occupation" />
+            <input name="Siblings[{idx}].Organization" class="form-input" placeholder="Organization" />
+            <select name="Siblings[{idx}].Gender" class="form-input w-32">
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+            </select>
+            <select name="Siblings[{idx}].MaritalStatus" class="form-input w-32">
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Widow">Widow</option>
+                    <option value="Divorced">Divorced</option>
+                    <option value="Separated">Separated</option>                 
+            </select>
+                <input name="Siblings[{idx}].Designation" class="form-input" placeholder="Designation" />
+        </div>
+    </div>
+</template>
+
+<template id="edu-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'edu-container', 'Educations')" class="absolute top-3 right-3 text-red-400 font-bold">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <input name="Educations[{idx}].Qualification" class="form-input" placeholder="Qualification" />
+            <input name="Educations[{idx}].MajorField" class="form-input" placeholder="Major Field" />
+            <input name="Educations[{idx}].BoardUniversity" class="form-input" placeholder="University" />
+            <input name="Educations[{idx}].CgpaPercentage" class="form-input" placeholder="CGPA/Percent" />
+            <input name="Educations[{idx}].FromDate" class="datepicker form-input" />
+            <input name="Educations[{idx}].ToDate" class="datepicker form-input" />
+        </div>
+    </div>
+</template>
+
+<template id="exp-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'exp-container', 'Experiences')" class="absolute top-3 right-3 text-red-400 font-bold">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <input name="Experiences[{idx}].OrganizationName" class="form-input" placeholder="Org" />
+            <input name="Experiences[{idx}].Designation" class="form-input" placeholder="Title" />
+            <input name="Experiences[{idx}].FromDate" class="datepicker form-input" />
+            <input name="Experiences[{idx}].ToDate" class="datepicker form-input" />
+            <textarea name="Experiences[{idx}].KeyResponsibilities" class="form-input col-span-2" placeholder="Responsibilities"></textarea>
+        </div>
+    </div>
+</template>
+
+<template id="skill-template">
+    <div class="flex gap-2 mb-2" data-index="{idx}">
+        <input name="Skills[{idx}].SkillName" class="form-input" placeholder="Skill" />
+        <select name="Skills[{idx}].Proficiency" class="form-input w-32">
+        <option>Beginner</option>
+        <option>Intermediate</option>
+        <option>Expert</option>
+        </select>
+        <button type="button" onclick="removeRow(this, 'skill-container', 'Skills')" class="text-red-500 font-bold px-2">×</button>
+    </div>
+</template>
+
+<template id="cert-template">
+    <div class="flex gap-2 mb-2" data-index="{idx}">
+        <input name="Certifications[{idx}].CertificateName" class="form-input" placeholder="Cert Name" />
+        <input name="Certifications[{idx}].IssuingBody" class="form-input" placeholder="Issuing Body" />
+        <button type="button" onclick="removeRow(this, 'cert-container', 'Certifications')" class="text-red-500 font-bold px-2">×</button>
+    </div>
+</template>
+
+<template id="rel-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'rel-container', 'InternalRelatives')" class="absolute top-3 right-3 text-red-400 font-bold">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <input name="InternalRelatives[{idx}].RelativeName" class="form-input" placeholder="Name" />
+            <input name="InternalRelatives[{idx}].Designation" class="form-input" placeholder="Title" />
+            <input name="InternalRelatives[{idx}].Department" class="form-input" placeholder="Department" />
+            <input name="InternalRelatives[{idx}].PayScale" class="form-input" placeholder="Scale" />
+        </div>
+    </div>
+</template>
+
+<template id="ach-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'ach-container', 'Achievements')" class="absolute top-3 right-3 text-red-400 font-bold">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <input name="Achievements[{idx}].Title" class="form-input" placeholder="Achievement Title" />
+            <input name="Achievements[{idx}].DateReceived" class="datepicker form-input" />
+            <textarea name="Achievements[{idx}].Description" class="form-input col-span-2" placeholder="Details"></textarea>
+        </div>
+    </div>
+</template>
+<template id="doc-template">
+    <div class="repeater-card border-l-emerald-500 bg-emerald-50/10" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'doc-container', 'DocumentAttachments')" 
+                class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <div>
+                <label class="section-label">Document Category *</label>
+                <select name="DocumentAttachments[{idx}].DocumentType" class="form-input" required>
+                    <option value="">-- Select Type --</option>
+                    <option value="Education">Education (Degrees/Transcripts)</option>
+                    <option value="Experience">Experience Letters</option>
+                    <option value="Degree">Professional Degree</option>
+                    <option value="Certificates">Certifications</option>
+                </select>
+            </div>
+            <div>
+                <label class="section-label">Select Files (Multiple Allowed) *</label>
+                <input type="file" name="DocumentAttachments[{idx}].Files" 
+                       class="form-input bg-white doc-file-input" 
+                       multiple required 
+                       accept=".pdf,.jpg,.jpeg,.png"
+                       onchange="validateDocumentFiles(this)" />
+                <div class="file-info-text text-[9px] mt-1 text-slate-400">Total size must be small (Max 50KB/file)</div>
+            </div>
+        </div>
+    </div>
+</template>
+@section Scripts {
+    <script>
+        let currentStep = 1;
+
+        // Reindex all rows inside a container (ensures sequential 0..n indices)
+        function reindexContainer(containerId, baseName) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const rows = container.children;
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                // Update all input, select, textarea names inside the row
+                row.querySelectorAll('input, select, textarea').forEach(el => {
+                    const name = el.getAttribute('name');
+                    if (name && name.startsWith(baseName + '[')) {
+                        const newName = name.replace(/\[.*?\]/, `[${i}]`);
+                        el.setAttribute('name', newName);
+                    }
+                });
+                row.setAttribute('data-index', i);
+            }
+        }
+
+        // Add a new row with the next sequential index
+        function addDynamicRow(containerId, templateId, baseName) {
+            const container = document.getElementById(containerId);
+            const template = document.getElementById(templateId).innerHTML;
+            const currentCount = container.children.length;
+            const newRowHtml = template.replace(/{idx}/g, currentCount);
+            container.insertAdjacentHTML('beforeend', newRowHtml);
+            
+            // Reinitialize datepickers and icons on the new row
+            if (typeof flatpickr !== 'undefined') {
+                flatpickr(".datepicker", { dateFormat: "Y-m-d", maxDate: "today" });
+            }
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Remove a row and reindex the remaining rows
+        function removeRow(btn, containerId, baseName) {
+            const row = btn.closest('.repeater-card');
+            if (row) {
+                row.remove();
+                reindexContainer(containerId, baseName);
+            } else {
+                // For simple div rows (Skills, Certifications)
+                const parentDiv = btn.parentElement;
+                if (parentDiv && parentDiv.parentElement) {
+                    parentDiv.remove();
+                    reindexContainer(containerId, baseName);
+                }
+            }
+        }
+function validateFileSize(input) {
+    const maxSize = 50 * 1024; // 50KB
+    const files = input.files;
+    
+    for (let i = 0; i < files.length; i++) {
+        if (files[i].size > maxSize) {
+            alert(`File "${files[i].name}" is too large (${(files[i].size/1024).toFixed(2)}KB). Please upload files smaller than 50KB.`);
+            input.value = ""; // Clear the input
+            return;
+        }
+    }
+}
+function validateDocumentFiles(input) {
+    const maxSize = 50 * 1024; // 50KB in bytes
+    const files = input.files;
+    let errorMsg = "";
+
+    for (let i = 0; i < files.length; i++) {
+        if (files[i].size > maxSize) {
+            errorMsg = `File "${files[i].name}" exceeds the 50KB limit (${(files[i].size / 1024).toFixed(1)}KB).`;
+            break;
+        }
+    }
+
+    if (errorMsg) {
+        alert(errorMsg);
+        input.value = ""; // Clear selection
+        input.classList.add('border-red-500');
+    } else {
+        input.classList.remove('border-red-500');
+        // Optional: show count of files selected
+        const label = input.parentElement.querySelector('.file-info-text');
+        label.innerText = `${files.length} file(s) selected - Ready to upload`;
+        label.classList.replace('text-slate-400', 'text-emerald-600');
+    }
+}
+        $(document).ready(function() {
+            // Ensure all dynamic containers are properly indexed on page load
+            reindexContainer('sib-container', 'Siblings');
+            reindexContainer('edu-container', 'Educations');
+            reindexContainer('exp-container', 'Experiences');
+            reindexContainer('skill-container', 'Skills');
+            reindexContainer('cert-container', 'Certifications');
+            reindexContainer('rel-container', 'InternalRelatives');
+            reindexContainer('ach-container', 'Achievements');
+
+            // WIZARD NAVIGATION
+            $('.btn-next').click(function() {
+                let isValid = true;
+                $(`#step-${currentStep} input[required], #step-${currentStep} textarea[required]`).each(function() {
+                    if (!$(this).val()) { $(this).addClass('input-validation-error'); isValid = false; } 
+                    else { $(this).removeClass('input-validation-error'); }
+                });
+
+                if (isValid) {
+                    $(`#step-${currentStep}`).removeClass('active');
+                    currentStep++;
+                    $(`#step-${currentStep}`).addClass('active');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    lucide.createIcons();
+                }
+            });
+
+            $('.btn-prev').click(function() {
+                $(`#step-${currentStep}`).removeClass('active');
+                currentStep--;
+                $(`#step-${currentStep}`).addClass('active');
+                lucide.createIcons();
+            });
+
+            // Initialize datepickers
+            flatpickr(".datepicker", { dateFormat: "Y-m-d", maxDate: "today" });
+            
+            // Initialize FilePond
+            FilePond.registerPlugin(FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
+            $('.filepond').each(function() { FilePond.create(this, { storeAsFile: true, maxFileSize: '2MB' }); });
+            
+            lucide.createIcons();
+
+
+              reindexContainer('doc-container', 'DocumentAttachments');
+
+    // Add a default row so the user sees it immediately
+    if ($('#doc-container').children().length === 0) {
+        addDynamicRow('doc-container', 'doc-template', 'DocumentAttachments');
+    }
+
+    // Update form submission to double-check file inputs
+    @* $('#applicationForm').on('submit', function(e) {
+        let valid = true;
+        $('.doc-file-input').each(function() {
+            if ($(this).prop('required') && $(this).get(0).files.length === 0) {
+                valid = false;
+                $(this).addClass('border-red-500');
+            }
+        });
+
+        if (!valid) {
+            e.preventDefault();
+            alert("Please ensure all document categories have at least one file attached.");
+        }
+    }); *@
+        });
+    </script>
+}

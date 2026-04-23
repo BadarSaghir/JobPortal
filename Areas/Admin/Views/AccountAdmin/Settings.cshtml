@@ -1,0 +1,137 @@
+@model Career635.Areas.Admin.Models.ChangePasswordViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "System Preferences";
+}
+
+<div class="max-w-6xl mx-auto pb-20">
+    
+    <!-- HEADER -->
+    <div class="flex justify-between items-end mb-12">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">Station Settings</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Configure your administrative workspace</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        
+        <!-- LEFT: SETTINGS NAVIGATION -->
+        <aside class="lg:col-span-3">
+            <nav class="flex flex-col gap-1 sticky top-28">
+                <button onclick="showTab('security')" class="set-nav-link active" id="btn-security">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> Access & Security
+                </button>
+                <button onclick="showTab('display')" class="set-nav-link" id="btn-display">
+                    <i data-lucide="monitor" class="w-4 h-4"></i> Display & UI
+                </button>
+                <button onclick="showTab('sessions')" class="set-nav-link" id="btn-sessions">
+                    <i data-lucide="activity" class="w-4 h-4"></i> Active Sessions
+                </button>
+            </nav>
+        </aside>
+
+        <!-- RIGHT: TAB CONTENT -->
+        <div class="lg:col-span-9 space-y-8">
+            
+            <!-- SECTION 1: SECURITY -->
+            <div id="tab-security" class="tab-pane animate-in fade-in slide-in-from-right-4 duration-500">
+                <div class="bg-white rounded-[3rem] border border-slate-200 p-10 lg:p-14 shadow-sm">
+                    <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-10 flex items-center gap-2">
+                        <i data-lucide="key-round" class="w-4 h-4"></i> Credential Management
+                    </h3>
+
+                    <form asp-action="ChangePassword" method="post" class="max-w-md space-y-8">
+                        <div class="space-y-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current System Password</label>
+                                <input asp-for="OldPassword" class="set-input" placeholder="••••••••" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">New Security Phrase</label>
+                                <input asp-for="NewPassword" class="set-input" placeholder="Minimum 8 characters" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Confirm New Phrase</label>
+                                <input asp-for="ConfirmPassword" class="set-input" placeholder="Repeat new phrase" />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 active:scale-95">
+                            Update Credentials
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- SECTION 2: DISPLAY (Placeholder for UX) -->
+            <div id="tab-display" class="tab-pane hidden animate-in fade-in slide-in-from-right-4 duration-500">
+                <div class="bg-white rounded-[3rem] border border-slate-200 p-10 lg:p-14 shadow-sm">
+                    <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-10">UI Preferences</h3>
+                    <div class="space-y-6">
+                        <label class="flex items-center justify-between p-6 bg-slate-50 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all border border-slate-100">
+                            <div>
+                                <p class="text-sm font-black text-slate-900 uppercase tracking-tight">Compact Dashboard</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Reduces spacing for data-heavy views</p>
+                            </div>
+                            <input type="checkbox" class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-0" />
+                        </label>
+                        <label class="flex items-center justify-between p-6 bg-slate-50 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all border border-slate-100">
+                            <div>
+                                <p class="text-sm font-black text-slate-900 uppercase tracking-tight">Email Merit Alerts</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Notify me when high-score candidates apply</p>
+                            </div>
+                            <input type="checkbox" checked class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-0" />
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: SESSIONS -->
+            <div id="tab-sessions" class="tab-pane hidden animate-in fade-in slide-in-from-right-4 duration-500">
+                <div class="bg-white rounded-[3rem] border border-slate-200 p-10 lg:p-14 shadow-sm">
+                    <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-10">Active Connectivity</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-6 bg-emerald-50/50 border border-emerald-100 rounded-2xl">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <i data-lucide="monitor"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-black text-slate-900 uppercase">Current Session (This Device)</p>
+                                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">IP: @Context.Connection.RemoteIpAddress</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-emerald-600 text-white text-[9px] font-black rounded-lg uppercase tracking-widest">Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .set-nav-link { @@apply flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all text-left w-full; }
+    .set-nav-link.active { @@apply bg-white border border-slate-200 text-emerald-600 shadow-sm translate-x-2; }
+    .set-nav-link:not(.active) { @@apply text-slate-400 hover:text-slate-600 hover:bg-white/50; }
+    .set-input { @@apply w-full border-b-2 border-slate-100 py-3 outline-none focus:border-emerald-500 font-bold text-slate-800 transition-all text-sm; }
+</style>
+
+@section Scripts {
+    <script>
+        function showTab(tabId) {
+            // Hide all panes
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+            // Remove active classes
+            document.querySelectorAll('.set-nav-link').forEach(b => b.classList.remove('active'));
+            
+            // Show target
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`btn-${tabId}`).classList.add('active');
+            
+            lucide.createIcons();
+        }
+    </script>
+}

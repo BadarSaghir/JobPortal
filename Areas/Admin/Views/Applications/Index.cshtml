@@ -1,0 +1,119 @@
+@model Career635.Areas.Admin.Models.DashboardViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Personnel Registry";
+}
+
+<div class="space-y-10">
+    <!-- 1. HEADER & SUMMARY -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">Personnel Dossiers</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-3">Registry of snapshot submissions</p>
+        </div>
+        
+        <div class="flex gap-4">
+            <div class="px-6 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-center">
+                <span class="block text-xl font-black text-slate-900">@Model.TotalApplications</span>
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Total Entries</span>
+            </div>
+            <div class="px-6 py-3 bg-emerald-600 rounded-2xl shadow-lg shadow-emerald-100 text-center">
+                <span class="block text-xl font-black text-white">@Model.PendingReviews</span>
+                <span class="text-[9px] font-black text-emerald-100 uppercase tracking-tighter">Pending Audit</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. SEARCH & FILTER BAR -->
+    <form method="get" asp-action="Index" class="bg-white p-4 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-[250px] relative">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300"></i>
+            <input name="searchTerm" value="@Model.SearchTerm" type="text" placeholder="Search by name, ID or role..." 
+                   class="w-full bg-slate-50 border-none rounded-xl pl-11 pr-4 py-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20" />
+        </div>
+        
+        <select name="statusFilter" class="bg-slate-50 border-none rounded-xl px-6 py-3 text-xs font-bold text-slate-500 outline-none focus:ring-2 focus:ring-emerald-500/20">
+            <option value="">All Phases</option>
+            <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
+            <option value="Shortlisted" selected="@(Model.StatusFilter == "Shortlisted")">Shortlisted</option>
+            <option value="Rejected" selected="@(Model.StatusFilter == "Rejected")">Rejected</option>
+        </select>
+        
+        <button type="submit" class="px-8 py-3 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-600 transition-all">
+            Update View
+        </button>
+        
+        @if(!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.StatusFilter)) {
+            <a href="/Admin/Applications" class="p-3 text-slate-400 hover:text-red-500 transition-colors" title="Clear Filters">
+                <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
+            </a>
+        }
+    </form>
+
+    <!-- 3. TABLE -->
+    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-slate-50/50">
+                        <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Candidate Identity</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Application Target</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Tracking ID</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                        <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach (var app in Model.RecentApplications)
+                    {
+                        <tr class="hover:bg-slate-50/30 transition-colors group">
+                            <td class="px-8 py-6">
+                                <p class="text-sm font-black text-slate-800">@app.ApplicantName</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-1">@app.AppliedAt.ToString("MMM dd, yyyy")</p>
+                            </td>
+                            <td class="px-6 py-6 text-xs font-bold text-slate-600">@app.JobTitle</td>
+                            <td class="px-6 py-6 text-center">
+                                <span class="font-mono text-[11px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100">
+                                    @app.TrackingCode
+                                </span>
+                            </td>
+                            <td class="px-6 py-6">
+                                <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border 
+                                    @(app.Status == "Pending" ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-emerald-50 text-emerald-600 border-emerald-100")">
+                                    @app.Status
+                                </span>
+                            </td>
+                            <td class="px-8 py-6 text-right">
+                                <a href="/Admin/Applications/Review/@app.ApplicationId" class="inline-flex w-10 h-10 rounded-xl bg-slate-100 items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+                                    <i data-lucide="file-search-2" class="w-4 h-4"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 4. PAGINATION -->
+        <div class="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Page @Model.PageNumber of @Model.TotalPages
+            </p>
+            <div class="flex gap-2">
+                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, pageNumber = Model.PageNumber - 1 })" 
+                   class="pag-btn @(Model.HasPreviousPage ? "" : "disabled")">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </a>
+                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, pageNumber = Model.PageNumber + 1 })" 
+                   class="pag-btn @(Model.HasNextPage ? "" : "disabled")">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pag-btn { @@apply w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:border-emerald-600 hover:text-emerald-600 transition-all shadow-sm; }
+    .pag-btn.disabled { @@apply opacity-20 pointer-events-none grayscale bg-slate-50; }
+</style>

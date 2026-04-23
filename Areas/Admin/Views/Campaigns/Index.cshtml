@@ -1,0 +1,231 @@
+@model Career635.Areas.Admin.Models.CampaignIndexViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Campaign Registry";
+}
+
+<div class="space-y-10 pb-20">
+    
+    <!-- 1. HEADER SECTION -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 no-print">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Campaign Registry</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-[0.2em] mt-3">High-Volume Personnel Batch Management</p>
+        </div>
+        
+        <button onclick="document.getElementById('modal-create').classList.remove('hidden')" class="flex items-center gap-3 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:bg-slate-900 transition-all active:scale-95">
+            <i data-lucide="layers" class="w-4 h-4"></i> Initiate New Batch
+        </button>
+    </div>
+
+    <!-- 2. SEARCH & FILTER HUD -->
+    <form method="get" asp-action="Index" class="bg-white p-4 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-wrap items-center gap-4 no-print">
+        <div class="flex-1 min-w-[300px] relative group">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-emerald-500 transition-colors"></i>
+            <input name="searchTerm" value="@Model.SearchTerm" type="text" placeholder="Search by Campaign Name or Registry Code..." 
+                   class="w-full bg-slate-50 border-none rounded-xl pl-11 pr-4 py-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all" />
+        </div>
+        
+        <select name="statusFilter" class="bg-slate-50 border-none rounded-xl px-6 py-3 text-[10px] font-black uppercase text-slate-500 outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer">
+            <option value="">All Registries</option>
+            <option value="true" selected="@(Model.StatusFilter == true)">Active Batches</option>
+            <option value="false" selected="@(Model.StatusFilter == false)">Paused Batches</option>
+        </select>
+        
+        <button type="submit" class="px-8 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all">
+            Update View
+        </button>
+        
+        @if(!string.IsNullOrEmpty(Model.SearchTerm) || Model.StatusFilter.HasValue) {
+            <a asp-action="Index" class="p-3 bg-slate-50 text-slate-300 rounded-xl hover:text-red-500 transition-colors" title="Reset All Filters">
+                <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
+            </a>
+        }
+    </form>
+
+    <!-- 3. DATA TABLE -->
+    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100">
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Campaign Identity</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Associated Requisitions</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Dossier Export</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="px-10 py-20 text-center">
+                                <div class="max-w-xs mx-auto space-y-4">
+                                    <i data-lucide="inbox" class="w-12 h-12 text-slate-100 mx-auto"></i>
+                                    <p class="text-sm font-bold text-slate-300 uppercase tracking-widest">No matching batches found</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var c in Model.Items)
+                    {
+                        <tr class="hover:bg-slate-50/30 transition-colors group">
+                            <td class="px-10 py-6">
+                                <p class="text-sm font-black text-slate-800 group-hover:text-emerald-600 transition-colors">@c.Name</p>
+                                <p class="text-[10px] font-mono text-emerald-600 font-bold uppercase mt-1 tracking-widest">Code: @c.CampaignCode</p>
+                            </td>
+                            <td class="px-6 py-6 text-center">
+                                <div class="inline-flex items-center gap-2">
+                                    <span class="text-sm font-black text-slate-700">@c.JobCount</span>
+                                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Live Roles</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border 
+                                    @(c.IsActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-100 text-slate-400 border-slate-200")">
+                                    @(c.IsActive ? "Active" : "Paused")
+                                </span>
+                            </td>
+                            <td class="px-10 py-6 text-right">
+                                <div class="flex justify-end items-center gap-4">
+                                    @if (c.ExportStatus == "Processing")
+                                    {
+                                        <div class="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-xl border border-amber-100 animate-pulse text-amber-600">
+                                            <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
+                                            <span class="text-[9px] font-black uppercase tracking-tighter">Zipping...</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @if (c.ExportStatus == "Completed" && !string.IsNullOrEmpty(c.DownloadUrl))
+                                        {
+                                            <a asp-action="Download" asp-route-id="@c.Id" class="text-[10px] font-black text-emerald-600 underline uppercase tracking-tighter mr-2 hover:text-slate-900 transition-colors">
+                                                Download Latest ZIP
+                                            </a>
+                                        }
+
+                                        <form asp-action="RequestExport" asp-route-id="@c.Id" method="post" onsubmit="return confirm('Dossier Generation: This will generate a new ZIP and delete previous versions. Large campaigns may take minutes. Proceed?')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-900 hover:text-white transition-all shadow-sm group">
+                                                <i data-lucide="package-plus" class="w-4 h-4 group-hover:scale-110"></i>
+                                            </button>
+                                        </form>
+
+                                        <button onclick="openEditModal('@c.Id', '@c.Name')" class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition-all">
+    <i data-lucide="edit-3" class="w-4 h-4"></i>
+</button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+<!-- Edit Modal -->
+<div id="modal-edit" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden p-6">
+    <div class="bg-white w-full max-w-md rounded-[3rem] p-12 shadow-2xl animate-in zoom-in duration-300">
+        <h2 class="text-2xl font-black text-slate-900 tracking-tighter uppercase mb-8">Rename Batch</h2>
+        <form asp-action="UpdateName" method="post" class="space-y-8">
+            <input type="hidden" name="id" id="edit-id" />
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">New Campaign Name*</label>
+                <input name="name" id="edit-name" required class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-emerald-500 font-bold text-slate-800" />
+            </div>
+            <div class="pt-6 flex gap-4">
+                <button type="button" onclick="document.getElementById('modal-edit').classList.add('hidden')" class="flex-1 py-4 text-xs font-black text-slate-400 uppercase">Cancel</button>
+                <button type="submit" class="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase shadow-xl">Apply Name</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+        <!-- 4. PAGINATION CONTROLS -->
+        <div class="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-6 no-print">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Registry Page @Model.PageNumber <span class="mx-2 text-slate-200">/</span> @Model.TotalPages
+            </p>
+            
+            <div class="flex gap-2">
+                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber - 1 })" 
+                   class="pag-btn @(Model.HasPreviousPage ? "" : "disabled")">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </a>
+                
+                <div class="flex gap-1">
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        if (i == Model.PageNumber) {
+                            <span class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xs font-black shadow-lg shadow-emerald-500/20">@i</span>
+                        } else if (i <= 3 || i >= Model.TotalPages - 2 || (i >= Model.PageNumber - 1 && i <= Model.PageNumber + 1)) {
+                            <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = i })" 
+                               class="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-400 flex items-center justify-center text-xs font-bold hover:border-emerald-600 hover:text-emerald-600 transition-all">@i</a>
+                        }
+                    }
+                </div>
+
+                <a href="@Url.Action("Index", new { searchTerm = Model.SearchTerm, statusFilter = Model.StatusFilter, page = Model.PageNumber + 1 })" 
+                   class="pag-btn @(Model.HasNextPage ? "" : "disabled")">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 5. CREATE CAMPAIGN MODAL (no-print) -->
+<div id="modal-create" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden p-6 no-print">
+    <div class="bg-white w-full max-w-md rounded-[3rem] p-10 lg:p-12 shadow-2xl animate-in zoom-in duration-300 relative overflow-hidden border border-slate-200">
+        <div class="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+            <i data-lucide="layers" class="w-32 h-32 text-slate-900"></i>
+        </div>
+
+        <h2 class="text-2xl font-black text-slate-900 tracking-tighter uppercase mb-2">Initiate Batch</h2>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-10 border-b border-slate-50 pb-6">New Recruitment Cycle Registry</p>
+        
+        <form asp-action="Create" method="post" class="space-y-8">
+            @Html.AntiForgeryToken()
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Campaign Title*</label>
+                <input name="Name" required class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-emerald-500 font-bold text-slate-800 transition-all" placeholder="e.g., Annual Technical Intake" />
+            </div>
+            
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Identity Code*</label>
+                <input name="CampaignCode" required class="w-full border-b-2 border-slate-100 py-2 outline-none focus:border-emerald-500 font-mono font-bold text-slate-800 uppercase transition-all" placeholder="BATCH-2025-A" />
+            </div>
+
+            <div class="flex items-center gap-3 pt-4">
+                <input type="checkbox" name="IsActive" value="true" checked class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+                <label class="text-[11px] font-bold text-slate-600 uppercase tracking-tight">Active Requisition Status</label>
+            </div>
+
+            <div class="pt-10 flex gap-4">
+                <button type="button" onclick="document.getElementById('modal-create').classList.add('hidden')" class="flex-1 py-4 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors">Abort</button>
+                <button type="submit" class="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:bg-slate-900 transition-all">Initiate Registry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .pag-btn { @@apply w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:border-emerald-600 hover:text-emerald-600 transition-all shadow-sm; }
+    .pag-btn.disabled { @@apply opacity-20 pointer-events-none bg-slate-50; }
+</style>
+
+@section Scripts {
+    <script>
+     
+
+    function openEditModal(id, name) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('modal-edit').classList.remove('hidden');
+    }
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') document.getElementById('modal-create').classList.add('hidden');
+        });
+    </script>
+}

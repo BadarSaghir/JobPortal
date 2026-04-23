@@ -1,0 +1,250 @@
+@model Career635.Areas.Admin.Models.EditJobViewModel
+@using Career635.Domain.Entities.Jobs
+@using Career635.Domain.Entities.Auth
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Modify Requisition: " + Model.Title;
+}
+
+
+<form asp-area="Admin" asp-controller="JobsAdmin" asp-action="Edit" asp-route-id="@Model.Id" method="post" id="jobForm" class="max-w-[1450px] mx-auto pb-40 px-4">
+    @Html.AntiForgeryToken()
+    
+    <!-- CRITICAL FIX: HIDDEN ID FOR CONCURRENCY -->
+    <input type="hidden" asp-for="Id" />
+
+    <!-- 1. STICKY COMMAND HUD -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12  top-20 z-40 bg-slate-50/95 backdrop-blur-md py-6 border-b border-slate-200/60 no-print">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">Modify Requisition</h1>
+            <div class="flex items-center gap-2 mt-1">
+                <div class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></div>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Personnel Registry Edit Mode</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <a asp-action="Index" class="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-all">Discard Changes</a>
+            <button type="submit" class="group flex items-center gap-4 px-12 py-5 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-slate-200 hover:bg-emerald-600 transition-all active:scale-95">
+                Save & Update <i data-lucide="save" class="w-4 h-4 transition-transform group-hover:scale-110"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        
+        <!-- LEFT: DESCRIPTIVE NARRATIVE (8 Units) -->
+        <div class="lg:col-span-8 space-y-10">
+            
+            <!-- SECTION 01: IDENTITY -->
+            <div class="bg-white rounded-[3.5rem] border border-slate-200 p-10 lg:p-16 shadow-sm relative overflow-hidden">
+                <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em] mb-12 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-[10px]">01</span>
+                    Identification Registry
+                </h3>
+
+                <div class="space-y-12">
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Official Designation Title*</label>
+                        <input asp-for="Title" required class="w-full border-b-2 border-slate-100 py-4 outline-none focus:border-emerald-500 font-black text-slate-800 text-4xl transition-all" />
+                        <span asp-validation-for="Title" class="text-red-500 text-[10px] font-bold"></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</label>
+                            <input asp-for="JobCategory" class="w-full border-b border-slate-100 py-2 outline-none font-bold text-slate-700 text-sm" placeholder="Leave blank if General" />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Salary Grade</label>
+                            <input asp-for="SalaryGrade" class="w-full border-b border-slate-100 py-2 outline-none font-bold text-slate-700 text-sm" placeholder="Leave blank to hide" />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Open Vacancies</label>
+                            <input asp-for="TotalPositions" type="number" class="w-full border-b border-slate-100 py-2 outline-none font-bold text-slate-700 text-sm" />
+                            <p class="text-[8px] text-slate-400 font-bold uppercase mt-1 tracking-tighter">0 = Multiple / Unlimited</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 02: MARKDOWN EDITORS -->
+            <div class="bg-white rounded-[3.5rem] border border-slate-200 p-10 lg:p-16 shadow-sm space-y-16">
+                
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em] flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-[10px]">02</span>
+                            Position Overview*
+                        </h3>
+                    </div>
+                    <textarea asp-for="Description" id="mde-desc"></textarea>
+                </div>
+
+                <div class="space-y-6 pt-10 border-t border-slate-50">
+                    <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em] mb-4 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-[10px]">03</span>
+                        Selection Criteria*
+                    </h3>
+                    <textarea asp-for="Requirements" id="mde-req"></textarea>
+                </div>
+
+                <div class="space-y-6 pt-10 border-t border-slate-50">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.4em] flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-[10px]">04</span>
+                            Benefits
+                        </h3>
+                        <span class="text-[9px] text-slate-400 font-bold uppercase italic">Leave blank to hide section</span>
+                    </div>
+                    <textarea asp-for="Benefits" id="mde-ben"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: LOGIC SIDECAR (4 Units) -->
+        <aside class="lg:col-span-4 space-y-10 sticky top-36">
+            
+            <!-- SYSTEM THRESHOLDS -->
+            <div class="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden">
+                <i data-lucide="cpu" class="absolute -right-4 -top-4 w-32 h-32 text-white/5 pointer-events-none"></i>
+                <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-12">Automated Merit Thresholds</h3>
+                
+                <div class="space-y-12 relative z-10">
+                    <div class="space-y-10">
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Min Experience (Full Years)</label>
+                            <input asp-for="RequiredExperienceYears" type="number" step="0.1" class="bg-white/5 border-b border-white/20 w-full py-2 outline-none focus:border-emerald-400 text-emerald-400 font-black text-3xl transition-all" />
+                            <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest italic mt-1">Leave 0 if not required</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Required Education Level*</label>
+                            <select asp-for="MinEducationLevel" required class="bg-transparent border-b border-white/20 w-full py-2 outline-none text-emerald-400 font-bold text-sm">
+                                @if(ViewBag.DegreeLevels != null) {
+                                    @foreach(var level in (IEnumerable<DegreeLevel>)ViewBag.DegreeLevels) {
+                                        <option value="@level.Name" class="text-slate-900" selected="@(Model.MinEducationLevel == level.Name)">@level.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-black text-slate-500 uppercase">Target Major Field</label>
+                            <input asp-for="RequiredMajorField" class="bg-white/5 border-b border-white/20 w-full py-2 outline-none focus:border-emerald-400 text-white text-sm" placeholder="Leave blank for any major" />
+                        </div>
+                    </div>
+
+                    <!-- SEARCHABLE CAMPAIGN (SINGLE / NULLABLE) -->
+                    <div class="space-y-4 pt-10 border-t border-white/5">
+                        <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Current Campaign</label>
+                        <select id="campaign-search" asp-for="CampaignId" placeholder="Search campaigns..." class="text-slate-900 text-xs">
+                            @if(Model.CampaignId.HasValue) {
+                                <option value="@Model.CampaignId" selected>@ViewBag.CurrentCampaignName</option>
+                            }
+                        </select>
+                        <p class="text-[8px] text-slate-600 font-bold uppercase italic mt-1">Leave blank for Independent Status</p>
+                    </div>
+
+                    <!-- Technical Skills -->
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Required Technical Skills</label>
+                        <textarea asp-for="RequiredSkillsRaw" rows="2" class="bg-white/5 border border-white/10 w-full p-4 rounded-2xl outline-none text-white text-[10px] font-mono leading-relaxed" placeholder="e.g. .NET, SQL, Docker"></textarea>
+                    </div>
+
+                    <!-- Timeline & Status -->
+                    <div class="space-y-8 pt-10 border-t border-white/5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-black text-slate-500 uppercase">Post Date*</label>
+                                <input asp-for="PostedAt" type="date" required class="bg-white/5 border border-white/10 rounded-xl w-full p-2.5 outline-none focus:border-emerald-400 text-white text-xs font-bold" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-black text-slate-500 uppercase">Expiry Deadline*</label>
+                                <input asp-for="ExpiresAt" type="date" required class="bg-white/5 border border-white/10 rounded-xl w-full p-2.5 outline-none focus:border-emerald-400 text-white text-xs font-bold" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4">
+                            <label class="text-[9px] font-black text-slate-500 uppercase">Registry Status</label>
+                            <select asp-for="Status" class="bg-white/10 border-none rounded-xl w-full py-4 text-[10px] font-black uppercase text-emerald-400 cursor-pointer">
+                                <option value="Published" class="text-slate-900">Published (Visible)</option>
+                                <option value="Draft" class="text-slate-900">Draft (Hidden)</option>
+                                <option value="Closed" class="text-slate-900">Closed (Archived)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Toggles -->
+                    <div class="pt-8 border-t border-white/5 space-y-6">
+                        <label class="flex items-center justify-between group cursor-pointer">
+                            <span class="text-[10px] font-bold text-slate-400 group-hover:text-emerald-400 transition-colors uppercase">PEC Registration Mandatory</span>
+                            <input asp-for="IsPecRequired" type="checkbox" class="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-0" />
+                        </label>
+                        <label class="flex items-center justify-between group cursor-pointer">
+                            <span class="text-[10px] font-bold text-slate-400 group-hover:text-emerald-400 transition-colors uppercase">Featured on Gateway</span>
+                            <input asp-for="IsFeatured" type="checkbox" class="w-5 h-5 rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-0" />
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEO & URL -->
+            <div class="bg-white rounded-[3rem] border border-slate-200 p-10 shadow-sm space-y-8">
+                <div class="space-y-2">
+                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Assignment Mode</label>
+                    <select asp-for="LocationType" class="w-full border-b border-slate-100 py-2 outline-none font-bold text-slate-800 text-xs">
+                        <option value="On-site">On-site</option>
+                        <option value="Remote">Remote</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="">None / Flexible</option>
+                    </select>
+                </div>
+                <div class="space-y-2 pt-6 border-t border-slate-50">
+                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">URL SEO Slug</label>
+                    <input asp-for="JobSlug" class="w-full border-b border-slate-100 py-1 text-[10px] font-mono outline-none text-slate-300 focus:text-emerald-600" />
+                </div>
+            </div>
+        </aside>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/lib/easymde/easymde.min.js"></script>
+    <script src="~/lib/tom-select/tom-select.complete.min.js"></script>
+
+    <script>
+        // 1. Initialize Markdown Editors
+        const mdeConfig = {
+            spellChecker: false,
+            status: false,
+            minHeight: "220px",
+            toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|", "link", "side-by-side", "preview"],
+        };
+        new EasyMDE({ element: document.getElementById('mde-desc'), ...mdeConfig });
+        new EasyMDE({ element: document.getElementById('mde-req'), ...mdeConfig });
+        new EasyMDE({ element: document.getElementById('mde-ben'), ...mdeConfig });
+
+        // 2. Searchable Campaign Logic (FIXED FOR CAMPAIGNID PERSISTENCE)
+        new TomSelect("#campaign-search", {
+            valueField: 'value',
+            labelField: 'text',
+            searchField: 'text',
+            maxItems: 1,
+            allowEmptyOption: true,
+            load: function(query, callback) {
+                if (!query.length) return callback();
+                fetch(`/Admin/JobsAdmin/SearchCampaigns?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(json => callback(json))
+                    .catch(() => callback());
+            },
+            render: {
+                option: (item, escape) => `<div class="py-3 px-4 text-xs font-bold border-b border-slate-50 hover:bg-emerald-50 hover:text-emerald-700 transition-all">${escape(item.text)}</div>`,
+                item: (item, escape) => `<div class="text-emerald-400 font-black text-xs uppercase tracking-tighter">${escape(item.text)}</div>`
+            }
+        });
+
+        lucide.createIcons();
+    </script>
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Application Wizard - Career 635</title>
+    
+    <!-- Tailwind v4 CSS -->
+    <link rel="stylesheet" href="~/dist/style.css" asp-append-version="true" />
+    
+    <!-- Local CSS Libraries -->
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
+    <link rel="stylesheet" href="~/lib/filepond/filepond.min.css" />
+    
+    @RenderSection("Styles", required: false)
+</head>
+<body class="bg-slate-50 font-sans antialiased text-slate-800 flex flex-col min-h-screen selection:bg-primary/20 selection:text-secondary">
+    
+    <!-- HEADER -->
+    <header class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50 shadow-sm print:hidden">
+        <div class="container mx-auto flex justify-between items-center max-w-5xl">
+              <a href="/" class="flex items-center gap-2 group">
+                <div class="bg-secondary p-1.5 rounded-lg group-hover:bg-primary transition-colors">
+                    <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-black tracking-tighter text-secondary uppercase">
+                    Career<span class="text-primary">635</span>
+                </span>
+            </a>
+            <a href="/" class="text-xs font-bold text-slate-400 uppercase hover:text-red-600 transition-colors flex items-center gap-1">
+                <i data-lucide="x-circle" class="size-4"></i> Cancel
+            </a>
+        </div>
+    </header>
+
+    <!-- DYNAMIC PROGRESS BAR -->
+    <div class="w-full bg-slate-200 h-1.5 shadow-inner print:hidden">
+        <div id="main-progress-bar" class="bg-primary h-full transition-all duration-700 ease-out" style="width: 25%"></div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 container mx-auto px-4 py-8 md:py-12 print:py-0 print:md:py-0 max-w-5xl relative">
+        <div class="bg-white rounded-2xl border border-slate-200 print:shadow-none shadow-2xl shadow-slate-200/50 p-6 md:p-12 relative overflow-hidden">
+            <!-- Background Watermark Icon -->
+            <div class="absolute -top-10 print:hidden -right-10 p-8 opacity-[0.02] pointer-events-none text-primary">
+                <i data-lucide="file-signature" class="size-64 transform rotate-12"></i>
+            </div>
+            
+            @RenderBody()
+            
+        </div>
+    </main>
+
+    <!-- Core Icons -->
+    <script src="~/lib/lucide.min.js"></script>
+    <script>lucide.createIcons();</script>
+
+    <!-- Local JS Libraries -->
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="~/lib/filepond/filepond-plugin-file-validate-size.min.js"></script>
+    <script src="~/lib/filepond/filepond-plugin-file-validate-type.min.js"></script>
+    <script src="~/lib/filepond/filepond.min.js"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
