@@ -1,3 +1,4 @@
+using Career635.Domain.Constants;
 using Career635.Domain.Entities.Applicants;
 using Career635.Domain.Entities.Auth;
 using Career635.Domain.Entities.Jobs;
@@ -158,6 +159,82 @@ private static async Task SeedApplicantsAsync(AppDbContext context)
     
     await context.SaveChangesAsync();
 }
+private static async Task SeedPermissionsAndSuperAdminAsync(
+    AppDbContext context, 
+    RoleManager<ApplicationRole> roleManager, 
+    UserManager<ApplicationUser> userManager)
+{
+    // 1. Seed Granular Permissions
+    var currentPermissions = await context.Permissions.ToListAsync();
+    foreach (var p in AppPermissions.AllPermissions)
+    {
+        if (!currentPermissions.Any(x => x.Name == p.Name))
+        {
+            context.Permissions.Add(new ApplicationPermission 
+            { 
+                Name = p.Name, 
+                Module = p.Module, 
+                DisplayName = p.Display 
+            });
+        }
+    }
+    await context.SaveChangesAsync();
+
+    // 2. Seed SuperAdmin Role
+    var superAdminRoleName = "SuperAdmin";
+    var superAdminRole = await roleManager.FindByNameAsync(superAdminRoleName);
+
+    if (superAdminRole == null)
+    {
+        superAdminRole = new ApplicationRole(superAdminRoleName) 
+        { 
+            Description = "Root administrative group with total system control." 
+        };
+        await roleManager.CreateAsync(superAdminRole);
+    }
+
+    // 3. Link All Permissions to SuperAdmin Role
+    var allPermissionIds = await context.Permissions.Select(p => p.Id).ToListAsync();
+    var existingRolePerms = await context.RolePermissions
+        .Where(rp => rp.RoleId == superAdminRole.Id)
+        .Select(rp => rp.PermissionId)
+        .ToListAsync();
+
+    foreach (var pId in allPermissionIds)
+    {
+        if (!existingRolePerms.Contains(pId))
+        {
+            context.RolePermissions.Add(new ApplicationRolePermission
+            {
+                RoleId = superAdminRole.Id,
+                PermissionId = pId
+            });
+        }
+    }
+    await context.SaveChangesAsync();
+
+    // 4. Seed the Master SuperAdmin User
+    var adminEmail = "admin@career635.com";
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+    if (adminUser == null)
+    {
+        adminUser = new ApplicationUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            FullName = "System Architect",
+            EmailConfirmed = true,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        var result = await userManager.CreateAsync(adminUser, "Admin@635!");
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, superAdminRoleName);
+        }
+    }
+}
 public static async Task SeedAllAsync(IServiceProvider serviceProvider)
 {
     using var scope = serviceProvider.CreateScope();
@@ -172,20 +249,12 @@ public static async Task SeedAllAsync(IServiceProvider serviceProvider)
     await SeedMasterDataAsync(context);
     await SeedLocationsAsync(context);
 
-    // 2. Seed Admin Identity
-    if (!await roleManager.RoleExistsAsync("SuperAdmin")) {
-        await roleManager.CreateAsync(new ApplicationRole("SuperAdmin"));
-    }
+    await SeedPermissionsAndSuperAdminAsync(context, roleManager, userManager);
 
-    var adminEmail = "admin@career635.com";
-    if (await userManager.FindByEmailAsync(adminEmail) == null) {
-        var admin = new ApplicationUser { 
-            UserName = adminEmail, Email = adminEmail, FullName = "System Admin",
-            EmailConfirmed = true, DepartmentId = (await context.Departments.FirstAsync()).Id
-        };
-        await userManager.CreateAsync(admin, "Admin@635!");
-        await userManager.AddToRoleAsync(admin, "SuperAdmin");
-    }
+    // 2. Seed Admin Identity
+
+
+
    if (await context.Set<DegreeLevel>().AnyAsync()) return;
 
     var levels = new List<DegreeLevel>

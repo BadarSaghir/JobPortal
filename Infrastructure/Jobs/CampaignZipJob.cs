@@ -14,7 +14,109 @@ public class CampaignZipJob(
     IWebHostEnvironment env,
     ILogger<CampaignZipJob> logger) : IJob
 {
-    public async Task Execute(IJobExecutionContext contextJob)
+//   public async Task Execute(IJobExecutionContext contextJob)
+//     {
+//         var taskIdStr = contextJob.MergedJobDataMap.GetString("TaskId");
+//         if (!Guid.TryParse(taskIdStr, out var taskId)) return;
+
+//         var task = await context.Set<CampaignExportTask>().Include(t => t.Campaign).FirstOrDefaultAsync(x => x.Id == taskId);
+//         if (task == null) return;
+
+//         // Create a unique temporary working directory for this specific export
+//         string tempRoot = Path.Combine(env.ContentRootPath, "temp_exports", taskId.ToString());
+
+//         try
+//         {
+//             task.Status = "Processing";
+//             await context.SaveChangesAsync();
+
+//             if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
+//             Directory.CreateDirectory(tempRoot);
+
+
+//             // 1. Fetch ALL data (including every document link)
+//             var applications = await context.JobApplications
+//                 .AsNoTracking()
+//                 .Include(a => a.JobOpening)
+//                 .Include(a => a.Applicant).ThenInclude(x => x.PersonalInfo)
+//             .Include(a => a.Applicant).ThenInclude(x => x.FamilySummary)
+//             .Include(a => a.Applicant).ThenInclude(x => x.FinancialDetail)
+//             .Include(a => a.Applicant).ThenInclude(x => x.MilitaryDetail)
+//             .Include(a => a.Applicant).ThenInclude(x => x.Educations)
+//             .Include(a => a.Applicant).ThenInclude(x => x.Experiences)
+//             .Include(a => a.Applicant).ThenInclude(x => x.Siblings)
+//             .Include(a => a.Applicant).ThenInclude(x => x.InternalRelatives)
+//             .Include(a => a.Applicant).ThenInclude(x => x.Skills)
+//             .Include(a => a.Applicant).ThenInclude(x => x.Certifications)
+//             .Include(a => a.Applicant).ThenInclude(x => x.Achievements)
+//                 .Include(a => a.Applicant).ThenInclude(x => x.Documents) // CRITICAL
+//                 .Where(a => a.JobOpening.CampaignId == task.CampaignId)
+//                 .ToListAsync();
+
+//             // 2. Resolve Base Path (Consistent with FileStorageService)
+//             string storageRoot = config.GetValue<string>("StorageSettings:DocumentRoot") ?? "uploads";
+//             string baseStoragePath = storageRoot.StartsWith("wwwroot") 
+//                 ? Path.Combine(env.ContentRootPath, storageRoot) 
+//                 : storageRoot;
+
+//             // 3. PHYSICALLY GATHER FILES
+//             foreach (var app in applications)
+//             {
+//                 // Create a subfolder in TEMP for each applicant: [FullName]_[CNIC]
+//                 string applicantFolder = Path.Combine(tempRoot, $"{app.Applicant.FullName}_{app.Applicant.CNICNumber}".Replace(" ", "_"));
+//                 Directory.CreateDirectory(applicantFolder);
+
+//                 // A. Copy Passport Image
+//                 await SafeCopyFile(baseStoragePath, app.Applicant.PassportImageUrl, applicantFolder, "Passport_Photo");
+
+//                 // B. Copy CV
+//                 await SafeCopyFile(baseStoragePath, app.Applicant.CvUrl, applicantFolder, "Main_CV");
+
+//                 // C. Copy All Other Documents (Degrees, Certs, etc.)
+//                 foreach (var doc in app.Applicant.Documents)
+//                 {
+//                     await SafeCopyFile(baseStoragePath, doc.FileUrl, applicantFolder, doc.DocumentType);
+//                 }
+//             }
+
+//             // 4. GENERATE EXCEL INSIDE THE TEMP ROOT
+//             string excelName = $"Master_Registry_{task.Campaign?.CampaignCode ?? "Default"}.xlsx";
+//             string excelPath = Path.Combine(tempRoot, excelName);
+//             await GenerateMasterExcelAsync(applications, excelPath);
+
+//             // 5. PREPARE FINAL ZIP
+//             string exportDir = Path.Combine(baseStoragePath, "exports");
+//             if (!Directory.Exists(exportDir)) Directory.CreateDirectory(exportDir);
+
+//             string zipFileName = $"{task.Campaign?.CampaignCode ?? "Default"}_Personnel_Dossier_{DateTime.Now:yyyyMMdd_HHmm}.zip";
+//             string finalZipPath = Path.Combine(exportDir, zipFileName);
+
+//             if (File.Exists(finalZipPath)) File.Delete(finalZipPath);
+
+//             // Zip the temporary folder (now contains organized subfolders + Excel)
+//             ZipFile.CreateFromDirectory(tempRoot, finalZipPath);
+
+//             // 6. FINALIZE TASK
+//             task.Status = "Completed";
+//             task.DownloadUrl = $"/uploads/exports/{zipFileName}";
+//             task.ProcessedAt = DateTime.UtcNow;
+//         }
+//         catch (Exception ex)
+//         {
+//             logger.LogError(ex, "Campaign Export Failed for Task {TaskId}", taskId);
+//             task.Status = "Failed";
+//             task.ErrorMessage = ex.Message;
+//         }
+//         finally
+//         {
+//             // Cleanup: Delete the temporary working directory
+//             if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
+//         }
+
+//         await context.SaveChangesAsync();
+//     }
+
+ public async Task Execute(IJobExecutionContext contextJob)
     {
         var taskIdStr = contextJob.MergedJobDataMap.GetString("TaskId");
         if (!Guid.TryParse(taskIdStr, out var taskId)) return;
@@ -25,87 +127,159 @@ public class CampaignZipJob(
             
         if (task == null) return;
 
+        // Unique temp workspace for this specific export
+        string tempRoot = Path.Combine(env.ContentRootPath, "temp_exports", taskId.ToString());
+
         try
         {
             task.Status = "Processing";
             await context.SaveChangesAsync();
 
-            // 1. Resolve Paths
-            string root = config.GetValue<string>("StorageSettings:DocumentRoot") ?? "uploads";
-            string baseDir = root.StartsWith("wwwroot") 
-                ? Path.Combine(env.ContentRootPath, root) 
-                : root;
+            if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
+            Directory.CreateDirectory(tempRoot);
+  var jobsInCampaign = await context.JobOpenings
+                .AsNoTracking()
+                .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.PersonalInfo)
+                           .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.FamilySummary)
 
-            // This is the source folder containing all JobId/CNIC subfolders
-            string campaignSourcePath = Path.Combine(baseDir, task.CampaignId.ToString());
-            
-            // This is where the .zip file lives
-            string exportDir = Path.Combine(baseDir, "exports");
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.FinancialDetail)
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.MilitaryDetail)
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Educations)
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Experiences)
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Siblings)
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.InternalRelatives)
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Skills)
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Certifications)
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Achievements)
+            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Documents)
+                .Where(j => j.CampaignId == task.CampaignId)
+                .ToListAsync();
+
+            // 2. Resolve Server Storage Root
+            string storageRoot = config.GetValue<string>("StorageSettings:DocumentRoot") ?? "uploads";
+            string baseStoragePath = storageRoot.StartsWith("wwwroot") 
+                ? Path.Combine(env.ContentRootPath, storageRoot) 
+                : storageRoot;
+
+            // 3. ORGANIZE PHYSICAL FILES INTO TEMP STRUCTURE
+            foreach (var job in jobsInCampaign)
+            {
+                // Folder 1: Job Title [JobId]
+                string jobFolderName = Sanitize($"{job.Title}_{job.Id.ToString()[..8]}");
+                string jobPath = Path.Combine(tempRoot, jobFolderName);
+                Directory.CreateDirectory(jobPath);
+
+                foreach (var app in job.JobApplications)
+                {
+                    // Folder 2: Applicant Name [CNIC]
+                    string applicantFolderName = Sanitize($"{app.Applicant.FullName}_{app.Applicant.CNICNumber}");
+                    string applicantPath = Path.Combine(jobPath, applicantFolderName);
+                    
+                    // Folder 3: Categorized Subfolders
+                    string profilePath = Path.Combine(applicantPath, "Profile_Photo");
+                    string cvPath = Path.Combine(applicantPath, "CV_Portfolio");
+                    string docsPath = Path.Combine(applicantPath, "Supporting_Documents");
+
+                    Directory.CreateDirectory(profilePath);
+                    Directory.CreateDirectory(cvPath);
+                    Directory.CreateDirectory(docsPath);
+
+                    // A. Copy Passport Image
+                    await SafeCopy(baseStoragePath, app.Applicant.PassportImageUrl, profilePath, "Passport_Photo");
+
+                    // B. Copy Main CV
+                    await SafeCopy(baseStoragePath, app.Applicant.CvUrl, cvPath, "Main_CV");
+
+                    // C. Copy All Other Documents (Grouped by DocumentType)
+                    foreach (var doc in app.Applicant.Documents)
+                    {
+                        string typeFolder = Path.Combine(docsPath, Sanitize(doc.DocumentType));
+                        if (!Directory.Exists(typeFolder)) Directory.CreateDirectory(typeFolder);
+                        await SafeCopy(baseStoragePath, doc.FileUrl, typeFolder, "Document");
+                    }
+                }
+            }
+
+            // 4. GENERATE EXCEL (Placed at the root of the ZIP)
+            string excelName = $"Campaign_Registry_{task.Campaign?.CampaignCode ?? "Default"}.xlsx";
+            await GenerateMasterExcelAsync(jobsInCampaign.SelectMany(x => x.JobApplications).ToList(), Path.Combine(tempRoot, excelName));
+
+            // 5. FINALIZE ZIP
+            string exportDir = Path.Combine(baseStoragePath, "exports");
             if (!Directory.Exists(exportDir)) Directory.CreateDirectory(exportDir);
 
-            // Ensure the campaign source folder exists (even if empty) so we can place the Excel there
-            if (!Directory.Exists(campaignSourcePath)) Directory.CreateDirectory(campaignSourcePath);
-
-            // 2. Generate the Excel Report inside the Campaign Folder
-            string excelName = $"Master_Registry_{task.Campaign.CampaignCode}.xlsx";
-            string excelPath = Path.Combine(campaignSourcePath, excelName);
-            await GenerateMasterExcelAsync(task.CampaignId, excelPath);
-
-            // 3. Prepare ZIP Path
-            string zipFileName = $"{task.Campaign.CampaignCode}_Personnel_Dossier_{DateTime.Now:yyyyMMdd}.zip";
+            string zipFileName = $"{task.Campaign?.CampaignCode ?? "Default"}_Full_Dossier.zip";
             string finalZipPath = Path.Combine(exportDir, zipFileName);
 
-            // 4. Delete previous ZIP if exists (1 zip per user/campaign requirement)
             if (File.Exists(finalZipPath)) File.Delete(finalZipPath);
+            ZipFile.CreateFromDirectory(tempRoot, finalZipPath);
 
-            // 5. ZIP the entire Campaign folder (Includes: Excel + Subfolders with Photos/CVs)
-            ZipFile.CreateFromDirectory(campaignSourcePath, finalZipPath);
-
-            // 6. Finalize Task
             task.Status = "Completed";
             task.DownloadUrl = $"/uploads/exports/{zipFileName}";
             task.ProcessedAt = DateTime.UtcNow;
-            task.ErrorMessage = null;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to generate ZIP for Campaign {CampId}", task.CampaignId);
+            logger.LogError(ex, "Export Error on Task {TaskId}", taskId);
             task.Status = "Failed";
             task.ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
         }
 
         await context.SaveChangesAsync();
     }
-    private async Task GenerateMasterExcelAsync(Guid campaignId, string filePath)
+
+    private async Task SafeCopy(string baseRoot, string? relativePath, string targetDir, string fileNamePrefix)
+    {
+        if (string.IsNullOrEmpty(relativePath)) return;
+        
+        // Clean relative path of leading slashes
+        string cleanRelative = relativePath.Replace("\\", "/").TrimStart('/');
+        string source = Path.GetFullPath(Path.Combine(baseRoot, cleanRelative));
+
+        if (File.Exists(source))
+        {
+            string ext = Path.GetExtension(source);
+            string dest = Path.Combine(targetDir, $"{fileNamePrefix}{ext}");
+            
+            // Handle multiple files of same type (e.g. 2 degrees)
+            int count = 1;
+            while(File.Exists(dest)) dest = Path.Combine(targetDir, $"{fileNamePrefix}_{count++}{ext}");
+            
+            await Task.Run(() => File.Copy(source, dest, true));
+        }
+    }
+
+    private string Sanitize(string name)
+    {
+        // Remove invalid folder characters
+        char[] invalid = Path.GetInvalidFileNameChars();
+        foreach (char c in invalid) name = name.Replace(c, '_');
+        return name.Replace(" ", "_");
+    }
+    private async Task GenerateMasterExcelAsync(List<JobApplication>  applications, string filePath)
     {
         // Fetch ALL data with exhaustive Includes
-        var applications = await context.JobApplications
-            .AsNoTracking()
-            .Include(a => a.JobOpening)
-            .Include(a => a.Applicant).ThenInclude(x => x.PersonalInfo)
-            .Include(a => a.Applicant).ThenInclude(x => x.FamilySummary)
-            .Include(a => a.Applicant).ThenInclude(x => x.FinancialDetail)
-            .Include(a => a.Applicant).ThenInclude(x => x.MilitaryDetail)
-            .Include(a => a.Applicant).ThenInclude(x => x.Educations)
-            .Include(a => a.Applicant).ThenInclude(x => x.Experiences)
-            .Include(a => a.Applicant).ThenInclude(x => x.Siblings)
-            .Include(a => a.Applicant).ThenInclude(x => x.InternalRelatives)
-            .Include(a => a.Applicant).ThenInclude(x => x.Skills)
-            .Include(a => a.Applicant).ThenInclude(x => x.Certifications)
-            .Include(a => a.Applicant).ThenInclude(x => x.Achievements)
-            .Where(a => a.JobOpening.CampaignId == campaignId)
-            .ToListAsync();
+      
 
         using var workbook = new XLWorkbook();
 
         // --- SHEET 1: MASTER BIO-DATA (EXHAUSTIVE) ---
         var wsMaster = workbook.Worksheets.Add("Master Registry");
+       
+       
+       
         var headers = new[] { 
-            "Tracking ID", "Job Applied For", "Current Status", "Applied At",
+            "Tracking ID", 
+            "Job Applied For", 
+            "Current Status", "Applied At",
             "Full Name", "CNIC Number", "Father Name", "Father CNIC", "DOB", "Gender", 
             "Marital Status", "Religion", "Caste", "Sect", "Contact No", "Email", "PEC No",
             "Present Address", "Permanent Address", "Army No", "Army Unit", "Army Character", "Army Scale",
-            "Current Salary", "Expected Salary", "Family Income Detail", "Total Brothers", "Total Sisters", "Total Children", "CandiaiteType", "Accommodation","SistersMarried","BrothersMarried","ChildrenMarried","SistersUnMarried","BrothersUnMarried","ChildrenUnMarried"
+            "Current Salary", "Expected Salary", "Family Income Detail", "Total Brothers", "Total Sisters", "Total Children", "CandiaiteType", "Accommodation","SistersMarried","BrothersMarried","ChildrenMarried","SistersUnMarried","BrothersUnMarried","ChildrenUnMarried","JobId","JobName","CV","Photo"
         };
         for (int i = 0; i < headers.Length; i++) wsMaster.Cell(1, i + 1).Value = headers[i];
 
@@ -142,7 +316,7 @@ public class CampaignZipJob(
             wsMaster.Cell(r, 21).Value = m?.ArmyUnit;
             wsMaster.Cell(r, 22).Value = m?.ArmyCharacter;
             wsMaster.Cell(r, 23).Value = m?.ArmyPayScale;
-            wsMaster.Cell(r, 24).Value = f?.CurrentSalary +"\nBenefits: "+ f?.OtherBenefits +"\n Facitlites "+f?.OtherFacilities;
+            wsMaster.Cell(r, 24).Value = f?.CurrentSalary +",\nBenefits: "+ f?.OtherBenefits +",\nFacitlites "+f?.OtherFacilities;
             wsMaster.Cell(r, 25).Value = f?.ExpectedSalary;
             wsMaster.Cell(r, 26).Value = f?.FamilyIncomeDetail;
            
@@ -160,6 +334,10 @@ public class CampaignZipJob(
             wsMaster.Cell(r, 35).Value = fs?.SistersUnmarried; //SistersMarried;
             wsMaster.Cell(r, 36).Value = fs?.BrothersUnmarried;
             wsMaster.Cell(r, 37).Value = fs?.ChildrenUnmarried;
+            wsMaster.Cell(r, 38).Value = app.JobOpeningId.ToString();
+            wsMaster.Cell(r, 39).Value = app.JobOpening.Title.ToString();
+            wsMaster.Cell(r, 40).Value = app.Applicant?.CvUrl?.ToString()??"N/A";
+            wsMaster.Cell(r, 41).Value = app.Applicant?.PassportImageUrl?.ToString()??"N/A";
 
 
         
@@ -197,7 +375,15 @@ public class CampaignZipJob(
 
         // --- SHEET 4: SIBLINGS ---
         var wsSib = workbook.Worksheets.Add("Siblings");
-        wsSib.Cell(1, 1).Value = "Applicant CNIC"; wsSib.Cell(1, 2).Value = "Sibling Name"; wsSib.Cell(1, 3).Value = "Gender"; wsSib.Cell(1, 4).Value = "Occupation";
+        wsSib.Cell(1, 1).Value = "Applicant CNIC"; 
+        wsSib.Cell(1, 2).Value = "Sibling Name"; 
+        wsSib.Cell(1, 3).Value = "Gender"; 
+        wsSib.Cell(1, 4).Value = "Occupation";
+        wsSib.Cell(1, 5).Value = "CNIC";
+        wsSib.Cell(1, 6).Value = "DateOfBirth";
+        wsSib.Cell(1, 7).Value = "Designation";
+        wsSib.Cell(1, 8).Value = "Organization";
+
         int sibRow = 2;
         foreach(var app in applications) {
             foreach(var s in app.Applicant.Siblings) {
@@ -226,6 +412,23 @@ public class CampaignZipJob(
             foreach(var ct in app.Applicant.Certifications) {
                 wsExtra.Cell(exRow, 1).Value = app.Applicant.CNICNumber; wsExtra.Cell(exRow, 2).Value = "Certification"; wsExtra.Cell(exRow, 3).Value = ct.CertificateName; wsExtra.Cell(exRow, 4).Value = ct.IssuingBody;
                 exRow++;
+            }
+        }
+
+
+   var wsDoc = workbook.Worksheets.Add("Documents");
+        wsDoc.Cell(1, 1).Value = "CNIC"; wsDoc.Cell(1, 2).Value = "DocType";
+        wsDoc.Cell(1, 3).Value = "Id"; wsDoc.Cell(1, 4).Value = "Path";
+        int wsdocRow = 2;
+        foreach(var app in applications) {
+            foreach(var ex in app.Applicant.Documents) {
+                wsDoc.Cell(wsdocRow, 1).Value = app.Applicant.CNICNumber;
+                wsDoc.Cell(wsdocRow, 2).Value = ex.DocumentType;
+                wsDoc.Cell(wsdocRow, 3).Value = ex.Id.ToString();
+                wsDoc.Cell(wsdocRow, 4).Value = ex.FileUrl;
+            
+        
+                wsdocRow++;
             }
         }
 

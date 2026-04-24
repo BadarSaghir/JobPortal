@@ -9,6 +9,7 @@ using Career635.Infrastructure.Persistence;
 using Career635.Domain.Entities.Auth;
 using Career635.Features.Jobs; // Needed for Darker Assembly Scanning
 using  Career635.Infrastructure.Security;
+using Career635.Infrastructure.Jobs;
 
 namespace Career635.Infrastructure.DependencyInjection;
 
@@ -84,6 +85,15 @@ public static class InfrastructureExtensions
         // 6. QUARTZ (BACKGROUND JOBS)
         services.AddQuartz(q =>
         {
+              var jobKey = new JobKey("AutoCloseExpiredJobsJob");
+        
+        q.AddJob<AutoCloseExpiredJobsJob>(opts => opts.WithIdentity(jobKey));
+
+        q.AddTrigger(opts => opts
+            .ForJob(jobKey)
+            .WithIdentity("AutoCloseExpiredJobsJob-trigger")
+            .WithCronSchedule("0 0 * * * ?") // Runs every hour (at minute 0)
+        );
         });
         services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
         services.AddScoped<IFileStorageService, FileStorageService>();
