@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Career635.Areas.Admin.Models;
 using Career635.Domain.Entities.Auth;
 using Career635.Domain.Entities.Jobs;
+using Career635.Features.Admin;
 using Career635.Infrastructure.Persistence;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
@@ -11,10 +12,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Paramore.Brighter;
 using Paramore.Darker;
+using QRCoder;
 
 [Area("Admin")]
+[Microsoft.AspNetCore.Mvc.Route("[area]/[controller]")] 
 [Authorize]
-[Microsoft.AspNetCore.Components.Route("[area]/[ontroller]")]
 public class AccountAdminController(IQueryProcessor queryProcessor,AppDbContext _context, IAmACommandProcessor commandProcessor,UserManager<ApplicationUser> userManager) : Controller
 {
     [HttpGet("Profile")]
@@ -53,30 +55,90 @@ public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
     return View("Settings");
 }
 
-[HttpGet("Edit/{id}")]
-public async Task<IActionResult> Edit(Guid id)
+
+
+
+[HttpGet("GetRecentNotifications")]
+public async Task<IActionResult> GetRecentNotifications()
 {
-    var job = await _context.JobOpenings.Include(j => j.RequiredSkills).FirstOrDefaultAsync(j => j.Id == id);
-    if (job == null) return NotFound();
+    var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (!Guid.TryParse(userIdClaim, out var userId)) return Unauthorized();
 
-    var model = job.Adapt<EditJobViewModel>();
-    model.RequiredSkillsRaw = string.Join(", ", job.RequiredSkills.Select(s => s.SkillName));
-
-    ViewBag.Campaigns = await _context.RecruitmentCampaigns.Where(c => !c.IsDeleted).ToListAsync();
-    ViewBag.DegreeLevels = await _context.DegreeLevels.OrderBy(x => x.LevelOrder).ToListAsync();
-
-    return View(model);
+    var result = await queryProcessor.ExecuteAsync(new GetNotificationsQuery { UserId = userId });
+    
+    // We return raw JSON here for the JavaScript Polling engine
+    return Json(result);
 }
 
-[HttpPost("Edit/{id}")]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Edit(EditJobViewModel model)
+[HttpGet("Notifications")]
+public async Task<IActionResult> Notifications(int page = 1, string? type = null, bool? isRead = null)
 {
-    if (!ModelState.IsValid) return View(model);
+    var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
     
-    var entity = model.Adapt<JobOpening>();
-    await commandProcessor.SendAsync(new UpdateJobCommand(entity, model.RequiredSkillsRaw));
+    var result = await queryProcessor.ExecuteAsync(new GetPagedNotificationsQuery {
+        UserId = userId,
+        Page = page,
+        TypeFilter = type,
+        ReadFilter = isRead
+    });
+
+    return View(result);
+}
+
+
+[HttpGet("Enable2FA")]
+public async Task<IActionResult> Enable2FA()
+{
+    var user = await userManager.GetUserAsync(User);
     
-    return RedirectToAction(nameof(Index));
+    // 1. Get or Create the Shared Secret Key
+    var unformattedKey = await userManager.GetAuthenticatorKeyAsync(user!);
+    if (string.IsNullOrEmpty(unformattedKey))
+    {
+        await userManager.ResetAuthenticatorKeyAsync(user!);
+        unformattedKey = await userManager.GetAuthenticatorKeyAsync(user!);
+    }
+
+    // 2. Generate the OTP Auth URI (Standard Protocol)
+    string authenticatorUri = $"otpauth://totp/Career635:{user!.Email}?secret={unformattedKey}&issuer=Career635&digits=6";
+
+    // 3. Generate QR Code Image (Base64) locally
+    using var qrGenerator = new QRCodeGenerator();
+    using var qrCodeData = qrGenerator.CreateQrCode(authenticatorUri, QRCodeGenerator.ECCLevel.Q);
+    using var qrCode = new PngByteQRCode(qrCodeData);
+    var qrBytes = qrCode.GetGraphic(20);
+    string qrBase64 = Convert.ToBase64String(qrBytes);
+
+    return View(new EnableTwoFactorViewModel(unformattedKey!, $"data:image/png;base64,{qrBase64}", null));
+}
+
+[HttpPost("Enable2FA")]
+public async Task<IActionResult> Enable2FA(EnableTwoFactorViewModel model)
+{
+    var user = await userManager.GetUserAsync(User);
+    
+    // Verify the code before enabling
+    var verificationCode = model.VerificationCode?.Replace(" ", "").Replace("-", "");
+    var isValid = await userManager.VerifyTwoFactorTokenAsync(user!, userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode!);
+
+    if (!isValid)
+    {
+        ModelState.AddModelError("VerificationCode", "Verification code is invalid.");
+        return View(model); // Return with errors
+    }
+
+    await userManager.SetTwoFactorEnabledAsync(user!, true);
+    TempData["Success"] = "Two-Factor Authentication is now active.";
+    return RedirectToAction(nameof(Profile));
+}
+
+[HttpPost("Disable2FA")]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Disable2FA()
+{
+    var user = await userManager.GetUserAsync(User);
+    await userManager.SetTwoFactorEnabledAsync(user!, false);
+    TempData["Success"] = "Two-factor authentication has been disabled.";
+    return RedirectToAction(nameof(Profile));
 }
 }

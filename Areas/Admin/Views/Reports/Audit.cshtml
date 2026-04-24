@@ -1,0 +1,38 @@
+@model IEnumerable<Career635.Domain.Entities.Auth.AuditLog>
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "Security Audit Trail"; }
+
+<div class="space-y-10">
+    <div class="flex justify-between items-end">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">Audit Trail</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2 pl-4 border-l-2 border-red-500">Sensitive System Activity Log</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-slate-50/50 border-b">
+                    <th class="px-8 py-5 text-[10px] font-black uppercase text-slate-400">Timestamp</th>
+                    <th class="px-6 py-5 text-[10px] font-black uppercase text-slate-400">Operator</th>
+                    <th class="px-6 py-5 text-[10px] font-black uppercase text-slate-400">Action</th>
+                    <th class="px-6 py-5 text-[10px] font-black uppercase text-slate-400">Object</th>
+                    <th class="px-8 py-5 text-[10px] font-black uppercase text-slate-400 text-right">Source IP</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                @foreach (var log in Model) {
+                    <tr class="text-xs">
+                        <td class="px-8 py-5 font-mono text-slate-400">@log.CreatedAt.ToString("HH:mm:ss dd MMM")</td>
+                        <td class="px-6 py-5 font-bold text-slate-700">@log.UserName</td>
+                        <td class="px-6 py-5">
+                            <span class="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-black uppercase">@log.Action</span>
+                        </td>
+                        <td class="px-6 py-5 font-medium text-slate-500">@log.EntityName</td>
+                        <td class="px-8 py-5 text-right font-mono text-slate-400">@log.IPAddress</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

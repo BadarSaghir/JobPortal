@@ -1,41 +1,73 @@
-using Career635.Areas.Admin.Models;
-using Career635.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Paramore.Darker;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Career635.Infrastructure.Persistence;
+using Career635.Areas.Admin.Models;
+using Career635.Domain.Entities.Auth;
 
-public class GetUserProfileQuery : IQuery<UserProfileViewModel?> { 
-    public Guid UserId { get; set; } 
+namespace Career635.Features.Admin;
+
+// 1. THE QUERY DEFINITION
+public class GetUserProfileQuery : IQuery<UserProfileViewModel?>
+{
+    public Guid UserId { get; set; }
 }
 
-public class GetUserProfileHandler(AppDbContext context) : QueryHandlerAsync<GetUserProfileQuery, UserProfileViewModel?>
+// 2. THE HANDLER (LOGIC)
+public class GetUserProfileHandler(
+    AppDbContext context, 
+    UserManager<ApplicationUser> userManager) 
+    : QueryHandlerAsync<GetUserProfileQuery, UserProfileViewModel?>
 {
-    public override async Task<UserProfileViewModel?> ExecuteAsync(GetUserProfileQuery query, CancellationToken ct = default)
+    public override async Task<UserProfileViewModel?> ExecuteAsync(
+        GetUserProfileQuery query, 
+        CancellationToken ct = default)
     {
+        // A. Fetch the User with all Master Data Includes
         var user = await context.Users
             .AsNoTracking()
-            .Include(u => u.Designation)
             .Include(u => u.Department)
+            .Include(u => u.Designation)
             .Include(u => u.PayScale)
             .FirstOrDefaultAsync(u => u.Id == query.UserId, ct);
 
         if (user == null) return null;
 
-        // Get Roles and Permissions
-        var roles = await context.UserRoles
+        // B. Fetch Assigned Roles (Identity standard)
+        var roles = await userManager.GetRolesAsync(user);
+
+        // C. Fetch Granular Permissions through the Role-Permission Matrix
+        // We join Roles -> RolePermissions -> Permissions
+        var roleIds = await context.UserRoles
             .Where(ur => ur.UserId == user.Id)
-            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .Select(ur => ur.RoleId)
             .ToListAsync(ct);
 
         var permissions = await context.RolePermissions
+            .AsNoTracking()
             .Include(rp => rp.Permission)
-            .Join(context.UserRoles.Where(ur => ur.UserId == user.Id), 
-                  rp => rp.RoleId, ur => ur.RoleId, (rp, ur) => rp.Permission.DisplayName)
+            .Where(rp => roleIds.Contains(rp.RoleId) && !rp.Permission.IsDeleted)
+            .Select(rp => rp.Permission.DisplayName)
             .Distinct()
+            .OrderBy(p => p)
             .ToListAsync(ct);
 
+        // D. Check if User has an Authenticator App Key configured
+        var hasAuthenticator = !string.IsNullOrEmpty(await userManager.GetAuthenticatorKeyAsync(user));
+
+        // E. Map to the final ViewModel
         return new UserProfileViewModel(
-            user.FullName, user.Email!, user.UserName!,
-            user.Designation?.Title, user.Department?.Name, user.PayScale?.Grade,
-            user.CreatedAt.DateTime, roles!, permissions!);
+            FullName: user.FullName,
+            Email: user.Email ?? "N/A",
+            UserName: user.UserName ?? "N/A",
+            Designation: user.Designation?.Title,
+            Department: user.Department?.Name,
+            PayScale: user.PayScale?.Grade,
+            CreatedAt: user.CreatedAt.DateTime,
+            Roles: roles,
+            Permissions: permissions,
+            IsTwoFactorEnabled: user.TwoFactorEnabled,
+            HasAuthenticator: hasAuthenticator
+        );
     }
 }

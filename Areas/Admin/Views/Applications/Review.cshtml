@@ -226,7 +226,9 @@
                 </div>
                 <div class="flex-1 bg-slate-800">
                     @if (!string.IsNullOrEmpty(a.CvUrl)) {
-                        <iframe src="@GetUrl(a.CvUrl)#view=FitH&toolbar=0" class="w-full h-full border-none"></iframe>
+                        <iframe src="@GetUrl(a.CvUrl)#view=FitH&toolbar=0" class="w-full h-full border-none" 
+                        type="application/pdf"
+                        ></iframe>
                     } else {
                         <div class="h-full flex flex-col items-center justify-center text-slate-500">
                             <i data-lucide="file-x-2" class="w-12 h-12 mb-4 opacity-20"></i>

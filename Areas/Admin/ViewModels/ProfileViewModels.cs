@@ -11,7 +11,10 @@ public record UserProfileViewModel(
     string? PayScale,
     DateTime CreatedAt,
     IEnumerable<string> Roles,
-    IEnumerable<string> Permissions
+    IEnumerable<string> Permissions,
+        bool IsTwoFactorEnabled, // NEW
+    bool HasAuthenticator    // NEW
+
 );
 
 public class UpdateProfileViewModel
