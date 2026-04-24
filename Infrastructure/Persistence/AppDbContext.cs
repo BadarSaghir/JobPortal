@@ -61,7 +61,8 @@ public class AppDbContext : IdentityDbContext<
     public DbSet<District> Districts => Set<District>();
     public DbSet<City> Tehsils => Set<City>();
     public DbSet<Address> Addresses => Set<Address>();
-
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // 1. Mandatory Identity Base Call
@@ -86,7 +87,7 @@ public class AppDbContext : IdentityDbContext<
         }
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken ct = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         // 4. SOFT DELETE INTERCEPTION
         // Instead of hard-deleting, we update the IsDeleted flag and timestamp
@@ -101,6 +102,69 @@ public class AppDbContext : IdentityDbContext<
                     break;
             }
         }
-        return base.SaveChangesAsync(ct);
+            var auditEntries = OnBeforeSaveChanges();
+    var result = await base.SaveChangesAsync(ct);
+    await OnAfterSaveChanges(auditEntries);
+        return result;
     }
+
+    private List<AuditEntry> OnBeforeSaveChanges()
+{
+    ChangeTracker.DetectChanges();
+    var auditEntries = new List<AuditEntry>();
+    foreach (var entry in ChangeTracker.Entries())
+    {
+        if (entry.Entity is AuditLog || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
+            continue;
+
+        var auditEntry = new AuditEntry(entry);
+        auditEntry.TableName = entry.Entity.GetType().Name;
+        auditEntry.Action = entry.State.ToString();
+        auditEntries.Add(auditEntry);
+
+        foreach (var property in entry.Properties)
+        {
+            string propertyName = property.Metadata.Name;
+            if (property.Metadata.IsPrimaryKey()) continue;
+
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    auditEntry.NewValues[propertyName] = property.CurrentValue;
+                    break;
+                case EntityState.Deleted:
+                    auditEntry.OldValues[propertyName] = property.OriginalValue;
+                    break;
+                case EntityState.Modified:
+                    if (property.IsModified)
+                    {
+                        auditEntry.OldValues[propertyName] = property.OriginalValue;
+                        auditEntry.NewValues[propertyName] = property.CurrentValue;
+                    }
+                    break;
+            }
+        }
+    }
+    return auditEntries;
+}
+
+private async Task OnAfterSaveChanges(List<AuditEntry> auditEntries)
+{
+    if (auditEntries == null || auditEntries.Count == 0) return;
+
+    foreach (var entry in auditEntries)
+    {
+        var log = new AuditLog
+        {
+            EntityName = entry.TableName,
+            Action = entry.Action,
+            OldValues = entry.OldValues.Count == 0 ? null : System.Text.Json.JsonSerializer.Serialize(entry.OldValues),
+            NewValues = entry.NewValues.Count == 0 ? null : System.Text.Json.JsonSerializer.Serialize(entry.NewValues),
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        Set<AuditLog>().Add(log);
+    }
+    await base.SaveChangesAsync();
+}
+
 }

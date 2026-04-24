@@ -4,6 +4,7 @@ using Career635.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Career635.Infrastructure.Persistence.Migrations.SqlServer
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424064345_Added_audit_notication")]
+    partial class Added_audit_notication
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -869,7 +872,7 @@ namespace Career635.Infrastructure.Persistence.Migrations.SqlServer
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("auditLogs");
                 });
 
             modelBuilder.Entity("Career635.Domain.Entities.Auth.DegreeLevel", b =>
@@ -1009,7 +1012,7 @@ namespace Career635.Infrastructure.Persistence.Migrations.SqlServer
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserNotifications");
+                    b.ToTable("userNotifications");
                 });
 
             modelBuilder.Entity("Career635.Domain.Entities.Jobs.ApplicationStatusHistory", b =>

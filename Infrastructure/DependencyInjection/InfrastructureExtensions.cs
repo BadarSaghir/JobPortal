@@ -53,6 +53,9 @@ public static class InfrastructureExtensions
         // Cookie configuration for MVC
         services.ConfigureApplicationCookie(options =>
         {
+             options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Strict; // Prevent CSRF
             options.LoginPath = "/Account/Login";
             options.AccessDeniedPath = "/Account/AccessDenied";
             options.Cookie.Name = "Career635.Auth";
