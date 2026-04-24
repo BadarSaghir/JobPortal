@@ -46,6 +46,11 @@ public class AccountController(IAmACommandProcessor processor,SignInManager<Appl
 
         return View(model);
     }
+    [HttpGet("/Account/AccessDenied")]
+public IActionResult AccessDenied()
+{
+    return View();
+}
 
     [HttpPost]
     public async Task<IActionResult> Logout()

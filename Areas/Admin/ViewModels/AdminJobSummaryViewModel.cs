@@ -1,19 +1,5 @@
 namespace Career635.Areas.Admin.Models;
 
-// public record AdminJobSummaryViewModel(
-//     Guid Id,
-//     string Title,
-//     string JobCategory,
-//     string Status,
-//     DateTime PostedAt,
-//     DateTime ExpiresAt,
-//     int ApplicantCount,
-//     bool IsFeatured,
-//     string? CampaignName
-// );
-
-
-
 public record AdminJobIndexViewModel(
     IEnumerable<AdminJobSummaryViewModel> Items,
     int PageNumber,
@@ -30,7 +16,7 @@ public record AdminJobIndexViewModel(
 public record AdminJobSummaryViewModel(
     Guid Id,
     string Title,
-    string JobCategory,
+    string? JobCategory,
     string Status,
     DateTime PostedAt,
     DateTime ExpiresAt,
@@ -38,3 +24,10 @@ public record AdminJobSummaryViewModel(
     bool IsFeatured,
     string? CampaignName
 );
+
+
+
+
+
+
+

@@ -29,10 +29,7 @@ builder.HasMany(j => j.JobApplications)
            .WithOne(a => a.JobOpening)
            .HasForeignKey(a => a.JobOpeningId)
            .OnDelete(DeleteBehavior.Restrict);
-//   builder.HasMany(j => j.RequiredSkills)
-//            .WithOne(s => s.JobOpening)
-//            .HasForeignKey(s => s.JobOpeningId)
-//            .OnDelete(DeleteBehavior.Cascade);
+
         // --- PERFORMANCE INDEXES ---
         builder.HasIndex(j => j.PostedAt);   // For "Recent Jobs"
         builder.HasIndex(j => j.ExpiresAt);  // For "Closing Soon"

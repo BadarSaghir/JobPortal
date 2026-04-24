@@ -1,0 +1,58 @@
+@{
+    Layout = "_Layout"; // Use the public layout or a clean blank layout
+    ViewData["Title"] = "Access Restricted";
+}
+
+<div class="min-h-[70vh] flex items-center justify-center px-6 py-20">
+    <div class="max-w-2xl w-full text-center">
+        
+        <!-- SECURITY ICON HUD -->
+        <div class="relative inline-block mb-10">
+            <div class="w-24 h-24 bg-red-50 rounded-[2.5rem] flex items-center justify-center text-red-500 border border-red-100 shadow-xl shadow-red-500/10">
+                <i data-lucide="shield-alert" class="w-12 h-12"></i>
+            </div>
+            <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center border-2 border-white shadow-lg">
+                <i data-lucide="lock" class="w-4 h-4 text-emerald-500"></i>
+            </div>
+        </div>
+
+        <!-- NOTIFICATION TEXT -->
+        <h1 class="text-4xl font-black text-slate-900 tracking-tighter uppercase mb-4">Unauthorized Entry</h1>
+        <p class="text-[10px] font-black text-red-600 uppercase tracking-[0.3em] mb-8">Security Protocol: Level 04 Violation</p>
+        
+        <div class="bg-white rounded-[3rem] border border-slate-200 p-10 shadow-2xl shadow-slate-200/60 mb-12 text-left">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-3">
+                <i data-lucide="info" class="w-5 h-5 text-emerald-600"></i> 
+                Insufficient Privilege Level
+            </h3>
+            <p class="text-sm text-slate-500 leading-relaxed mb-6 font-light">
+                Your current account identity does not possess the granular permissions required to access this system module. This attempt has been logged for security audit purposes.
+            </p>
+            
+            <div class="space-y-4 pt-6 border-t border-slate-50">
+                <div class="flex items-center gap-4">
+                    <span class="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">ID</span>
+                    <span class="text-xs font-mono font-bold text-slate-600 uppercase tracking-tight">@User.Identity?.Name</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400">IP</span>
+                    <span class="text-xs font-mono font-bold text-slate-600 tracking-tight">@Context.Connection.RemoteIpAddress</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="/Admin/Dashboard" class="w-full sm:w-auto px-10 py-4 bg-secondary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-secondary/20 hover:bg-emerald-600 transition-all active:scale-95">
+                Return to Console
+            </a>
+            <a href="mailto:it.support@career635.com" class="w-full sm:w-auto px-10 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
+                Contact Technical Unit
+            </a>
+        </div>
+
+        <p class="mt-12 text-[10px] text-slate-400 font-bold uppercase tracking-widest opacity-50">
+            Career 635 personnel security architecture
+        </p>
+    </div>
+</div>

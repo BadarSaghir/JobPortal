@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Career635.Features.Admin;
 using Paramore.Darker;
+using Career635.Domain.Constants;
 
 namespace Career635.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = "SuperAdmin")]
+[Authorize(Policy = AppPermissions.JobsView)] // Basic entry requirement
+
 public class DashboardController(IQueryProcessor queryProcessor) : Controller
 {
     [HttpGet]

@@ -10,11 +10,12 @@ using Career635.Domain.Entities.Jobs;
 using Paramore.Brighter;
 using Paramore.Darker;
 using Quartz;
+using Career635.Domain.Constants;
 
 namespace Career635.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = "SuperAdmin")]
+[Authorize(Policy = AppPermissions.CampaignsManage)] // Entire controller restricted
 [Route("[area]/[controller]")]
 public class CampaignsController(
     IQueryProcessor queryProcessor,
@@ -111,7 +112,8 @@ public async Task<IActionResult> UpdateName(Guid id, string name)
         await context.SaveChangesAsync();
 
         // Queue the Quartz Job
-        var scheduler = await schedulerFactory.GetScheduler();
+        var scheduler = await 
+        schedulerFactory.GetScheduler();
         var job = JobBuilder.Create<CampaignZipJob>()
             .WithIdentity($"ZipJob-{id}", "CampaignExports")
             .UsingJobData("TaskId", existingTask.Id.ToString())

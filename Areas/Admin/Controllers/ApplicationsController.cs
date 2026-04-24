@@ -4,16 +4,18 @@ using Paramore.Darker;
 using Paramore.Brighter;
 using Career635.Features.Admin;
 using System.Security.Claims;
+using Career635.Domain.Constants;
 
 namespace Career635.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Route("[area]/[controller]")] // This dynamically uses "Admin/Applications"
-[Authorize(Roles = "SuperAdmin")]
+[Authorize] // Must be logged in
 public class ApplicationsController(IQueryProcessor queryProcessor, IAmACommandProcessor commandProcessor,    IConfiguration config, IWebHostEnvironment env) : Controller
 {
     // 1. LIST ALL SUBMISSIONS
     [HttpGet]
+        [Authorize(Policy = AppPermissions.ApplicantsView)]
 public async Task<IActionResult> Index(string? searchTerm, string? statusFilter, int pageNumber = 1)
 {
     var query = new GetAdminDashboardQuery 
@@ -28,6 +30,8 @@ public async Task<IActionResult> Index(string? searchTerm, string? statusFilter,
 }
     // 2. VIEW FULL DOSSIER
     [HttpGet("Review/{id}")]
+        [Authorize(Policy = AppPermissions.ApplicantsView)]
+
     public async Task<IActionResult> Review(Guid id)
     {
         var result = await queryProcessor.ExecuteAsync(new GetApplicationReviewQuery { Id = id });
@@ -62,6 +66,8 @@ public IActionResult GetFile(string path)
     // 3. UPDATE DOSSIER STATUS
     [HttpPost]
     [ValidateAntiForgeryToken]
+        [Authorize(Policy = AppPermissions.ApplicantsManage)]
+
     public async Task<IActionResult> UpdateStatus(Guid applicationId, string status, string? remarks)
     {
         // Get the current logged-in Admin's ID from Claims

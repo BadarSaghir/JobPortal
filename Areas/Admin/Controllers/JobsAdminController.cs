@@ -8,6 +8,7 @@ using Career635.Domain.Entities.Jobs;
 using Mapster;
 using Paramore.Darker;
 using Career635.Features.Admin;
+using Career635.Domain.Constants;
 
 namespace Career635.Areas.Admin.Controllers;
 
@@ -29,6 +30,8 @@ public class JobsAdminController : Controller
     
     }
   [HttpGet]
+      [Authorize(Policy = AppPermissions.JobsView)]
+
 public async Task<IActionResult> Index(string? searchTerm, string? status, string? category, int pageNumber = 1)
 {
     var query = new GetAdminJobsQuery { 
@@ -56,6 +59,8 @@ public async Task<IActionResult> SearchCampaigns(string q)
     return Json(campaigns);
 }
     [HttpGet("Create")] // URL: /Admin/Jobs/Create
+        [Authorize(Policy = AppPermissions.JobsManage)]
+
     public async Task<IActionResult> Create()
     {
         // Safety check for DB context
@@ -74,6 +79,8 @@ public async Task<IActionResult> SearchCampaigns(string q)
 
     [HttpPost("Create")]
     [ValidateAntiForgeryToken]
+        [Authorize(Policy = AppPermissions.JobsManage)]
+
     public async Task<IActionResult> Create(CreateJobViewModel model)
     {
         if (!ModelState.IsValid)
@@ -90,6 +97,8 @@ public async Task<IActionResult> SearchCampaigns(string q)
     }
 
     [HttpGet("Edit/{id}")]
+        [Authorize(Policy = AppPermissions.JobsManage)]
+
 public async Task<IActionResult> Edit(Guid id)
 {
     var job = await _context.JobOpenings.Include(j => j.Campaign).Include(j => j.RequiredSkills).FirstOrDefaultAsync(j => j.Id == id);
@@ -107,26 +116,48 @@ public async Task<IActionResult> Edit(Guid id)
 
 [HttpPost("Edit/{id}")]
 [ValidateAntiForgeryToken]
+    [Authorize(Policy = AppPermissions.JobsManage)]
+
 public async Task<IActionResult> Edit(Guid id, EditJobViewModel model)
 {
-    // Security Check: ID in URL must match ID in Hidden Field
+    ViewBag.Error = "";
+    
+    // Safety Check: ID in URL must match ID in Hidden Field
     if (id != model.Id) return BadRequest();
 
     if (!ModelState.IsValid)
     {
-        // Re-populate dropdowns if returning to view
         ViewBag.DegreeLevels = await _context.DegreeLevels.OrderBy(x => x.LevelOrder).ToListAsync();
+        var job = await _context.JobOpenings.Include(j => j.Campaign).FirstOrDefaultAsync(x => x.Id == id);
+        ViewBag.CurrentCampaignName = job?.Campaign?.Name;
         return View(model);
     }
 
-    // Map ViewModel to Entity
-    var entity = model.Adapt<JobOpening>();
+    // 1. Map ViewModel to a temporary Entity object
+    var jobData = model.Adapt<JobOpening>();
     
-    // ENSURE the ID is explicitly set on the entity before sending to Brighter
-    entity.Id = id; 
+    // 2. FORCED ID ASSIGNMENT
+    // Ensure Mapster didn't drop the ID mapping during adaptation
+    jobData.Id = id; 
 
-    await _commandProcessor.SendAsync(new UpdateJobCommand(entity, model.RequiredSkillsRaw));
-
-    return RedirectToAction(nameof(Index));
+    // 3. Dispatch the Command
+    try 
+    {
+        await _commandProcessor.SendAsync(new UpdateJobCommand(jobData, model.RequiredSkillsRaw));
+        return RedirectToAction(nameof(Index));
+    }
+    catch (Exception ex)
+    {
+        ViewBag.Error = "Update failed: " + ex.Message;
+        ModelState.AddModelError("", "Update failed: " + ex.Message);
+        
+        // Re-hydrate the ViewBag for the UI in case of failure
+        ViewBag.DegreeLevels = await _context.DegreeLevels.OrderBy(x => x.LevelOrder).ToListAsync();
+        var job = await _context.JobOpenings.Include(j => j.Campaign).FirstOrDefaultAsync(x => x.Id == id);
+        ViewBag.CurrentCampaignName = job?.Campaign?.Name;
+        
+        return View(model);
+    }
 }
+
 }

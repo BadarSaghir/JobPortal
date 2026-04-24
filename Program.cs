@@ -1,3 +1,4 @@
+using Career635.Domain.Constants;
 using Career635.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,18 @@ builder.Services.AddSession(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddAuthorization(options =>
+    {
+        // Dynamically create a policy for every permission defined in our constants
+        foreach (var permission in AppPermissions.AllPermissions)
+        {
+            options.AddPolicy(permission.Name, policy => 
+                policy.RequireClaim("Permission", permission.Name));
+        }
+        
+        // Special Policy for SuperAdmins to bypass all checks
+        options.AddPolicy("SuperAdminOnly", policy => policy.RequireRole("SuperAdmin"));
+    });
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

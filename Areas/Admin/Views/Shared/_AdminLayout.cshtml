@@ -1,3 +1,4 @@
+@using Career635.Domain.Constants
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-slate-50">
 <head>
@@ -15,8 +16,7 @@
     <style>
         /* 
            PRINT ENGINE REPAIR:
-           Browsers will truncate printed pages if h-full or overflow-hidden is active.
-           This completely linearizes the document for perfect multi-page printing.
+           Linearizes the document for perfect multi-page printing.
         */
         @@media print {
             html, body { 
@@ -43,7 +43,7 @@
         }
 
         /* Clean, non-distracting scrollbar */
-        ::-webkit-scrollbar { w-2 h-2; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -77,14 +77,22 @@
                         <i data-lucide="layout-dashboard" class="w-5 h-5 opacity-80"></i>
                         Dashboard
                     </a>
-                    <a href="/Admin/Applications" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "Applications" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
-                        <i data-lucide="users" class="w-5 h-5 opacity-80"></i>
-                        Personnel Dossiers
-                    </a>
-                    <a href="/Admin/JobsAdmin" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "JobsAdmin" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
-                        <i data-lucide="file-text" class="w-5 h-5 opacity-80"></i>
-                        Requisitions
-                    </a>
+
+                    @if (User.HasClaim("Permission", AppPermissions.ApplicantsView))
+                    {
+                        <a href="/Admin/Applications" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "Applications" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
+                            <i data-lucide="users" class="w-5 h-5 opacity-80"></i>
+                            Personnel Dossiers
+                        </a>
+                    }
+
+                    @if (User.HasClaim("Permission", AppPermissions.JobsView))
+                    {
+                        <a href="/Admin/JobsAdmin" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "JobsAdmin" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
+                            <i data-lucide="file-text" class="w-5 h-5 opacity-80"></i>
+                            Requisitions
+                        </a>
+                    }
                 </div>
             </div>
 
@@ -92,14 +100,37 @@
             <div>
                 <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Management</p>
                 <div class="space-y-1">
-                    <a href="/Admin/Campaigns" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
-                        <i data-lucide="layers" class="w-5 h-5 opacity-80"></i>
-                        Batches
-                    </a>
-                    <a href="/Admin/Reports" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
-                        <i data-lucide="bar-chart-3" class="w-5 h-5 opacity-80"></i>
-                        Analytics
-                    </a>
+                    @if (User.HasClaim("Permission", AppPermissions.CampaignsManage))
+                    {
+                        <a href="/Admin/Campaigns" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "Campaigns" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
+                            <i data-lucide="layers" class="w-5 h-5 opacity-80"></i>
+                            Batches
+                        </a>
+                    }
+
+                    @if (User.HasClaim("Permission", AppPermissions.JobsManage))
+                    {
+                        <a href="/Admin/Reports" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 opacity-80"></i>
+                            Analytics
+                        </a>
+                    }
+
+                    @if (User.HasClaim("Permission", AppPermissions.StaffManage))
+                    {
+                        <a href="/Admin/Staff" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "Staff" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
+                            <i data-lucide="users" class="w-5 h-5 opacity-80"></i>
+                            Accounts
+                        </a>
+                    }
+
+                    @if (User.HasClaim("Permission", AppPermissions.RolesManage))
+                    {
+                        <a href="/Admin/Roles" class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors @(ViewContext.RouteData.Values["controller"]?.ToString() == "Roles" ? "bg-emerald-600 text-white" : "hover:bg-slate-800 hover:text-white")">
+                            <i data-lucide="shield-check" class="w-5 h-5 opacity-80"></i>
+                            Roles
+                        </a>
+                    }
                 </div>
             </div>
 
@@ -154,14 +185,14 @@
 
                     <!-- Dropdown Content -->
                     <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg border border-slate-200 shadow-lg py-1 z-50">
-                        <a asp-action="Profile"  asp-area="Admin" asp-controller="AccountAdmin" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                        <a asp-action="Profile" asp-area="Admin" asp-controller="AccountAdmin" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                             <i data-lucide="user" class="w-4 h-4 text-slate-400"></i> My Profile
                         </a>
-                        <a asp-action="Settings" asp-area="Admin"  asp-controller="AccountAdmin" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                        <a asp-action="Settings" asp-area="Admin" asp-controller="AccountAdmin" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
                             <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i> Settings
                         </a>
                         <div class="h-px bg-slate-200 my-1"></div>
-                        <form  asp-controller="Account" asp-action="Logout" method="post">
+                        <form asp-controller="Account" asp-action="Logout" method="post">
                             <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left">
                                 <i data-lucide="log-out" class="w-4 h-4 text-red-500"></i> Sign out
                             </button>
@@ -172,7 +203,6 @@
         </header>
 
         <!-- MAIN CONTENT AREA -->
-        <!-- Added pt-6 for breathing room, standard max-width so forms aren't stretched too far on big screens -->
         <main class="flex-1 overflow-y-auto p-6 lg:p-8">
             
             <div class="max-w-7xl mx-auto">
