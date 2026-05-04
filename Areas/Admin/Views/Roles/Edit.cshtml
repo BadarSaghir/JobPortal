@@ -1,0 +1,80 @@
+@model Career635.Areas.Admin.Models.EditRoleViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Modify Privilege Group";
+    var groups = (IEnumerable<Career635.Areas.Admin.Models.PermissionGroupDto>)ViewBag.PermissionGroups;
+}
+
+<form asp-action="Edit" method="post" class="max-w-7xl mx-auto pb-32">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <!-- ACTION HEADER -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-12 sticky top-20 z-40 bg-slate-50/90 backdrop-blur-md py-6 border-b border-slate-200/50">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Edit Role</h1>
+            <p class="text-[10px] text-blue-500 font-bold uppercase tracking-[0.3em] mt-3">Modifying Security Authorization Level</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <a asp-action="Index" class="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">Cancel</a>
+            <button type="submit" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-600 transition-all">
+                Update Privileges
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-12 items-start">
+        
+        <!-- LEFT: ROLE BASICS -->
+        <div class="lg:col-span-5 space-y-10">
+            <div class="bg-white rounded-[3.5rem] border border-slate-200 p-10 lg:p-14 shadow-sm relative overflow-hidden">
+                <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em] mb-12">01. Role Definition</h3>
+                
+                <div class="space-y-8">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Role Identifier*</label>
+                        <input asp-for="Name" required class="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-emerald-500 font-black text-slate-800 text-2xl transition-all" />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Scope Description</label>
+                        <textarea asp-for="Description" rows="4" class="w-full bg-slate-50 rounded-2xl p-6 text-sm outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all font-medium text-slate-600"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: PERMISSION MATRIX -->
+        <div class="lg:col-span-7">
+            <div class="bg-white rounded-[3.5rem] border border-slate-200 p-10 lg:p-14 shadow-sm">
+                <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em] mb-12">02. Update Privilege Matrix</h3>
+
+                <div class="space-y-12">
+                    @foreach (var group in groups)
+                    {
+                        <div>
+                            <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-6 border-l-4 border-emerald-500 pl-4 bg-slate-50 py-2">
+                                @group.Module System
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach (var perm in group.Permissions)
+                                {
+                                    <label class="flex items-center justify-between p-5 rounded-2xl border border-slate-100 bg-white hover:border-emerald-200 transition-all cursor-pointer group">
+                                        <div>
+                                            <p class="text-xs font-black text-slate-700 uppercase tracking-tight">@perm.DisplayName</p>
+                                            <p class="text-[9px] font-mono text-slate-400">@perm.Name</p>
+                                        </div>
+                                        <!-- Check if permission exists in model list -->
+                                        <input type="checkbox" name="SelectedPermissionIds" value="@perm.Id" 
+                                               class="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-0" 
+                                               @(Model.SelectedPermissionIds.Contains(perm.Id) ? "checked" : "") />
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,155 @@
+@model Career635.Areas.Admin.Models.CreateStaffViewModel
+@using Career635.Domain.Entities.Auth
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Personnel Onboarding";
+}
+
+<form asp-action="Create" method="post" class="max-w-6xl mx-auto pb-32">
+    @Html.AntiForgeryToken()
+
+    <!-- 1. ACTION HEADER -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 sticky top-20 z-40 bg-slate-50/90 backdrop-blur-md py-6 border-b border-slate-200/50">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase">Personnel Onboarding</h1>
+            <div class="flex items-center gap-2 mt-1">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Register Authorized System Operator</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <a asp-action="Index" class="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors">Abort Protocol</a>
+            <button type="submit" class="group flex items-center gap-3 px-10 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-emerald-200 hover:bg-slate-900 transition-all active:scale-95">
+                Onboard Operator <i data-lucide="user-plus" class="w-4 h-4 transition-transform group-hover:scale-110"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. ERROR SUMMARY -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="mb-10 bg-red-50 border border-red-100 p-6 rounded-3xl text-red-600 text-xs font-bold animate-in fade-in zoom-in duration-300">
+            <div class="flex items-center gap-3 mb-2">
+                <i data-lucide="alert-octagon" class="w-5 h-5"></i>
+                <span class="uppercase tracking-widest">Security Validation Failed</span>
+            </div>
+            <div asp-validation-summary="All" class="ml-8 list-disc"></div>
+        </div>
+    }
+
+    <div class="grid grid-cols-1 gap-12 items-start">
+        
+        <!-- LEFT: PRIMARY IDENTITY (7 Units) -->
+        <div class="lg:col-span-7 space-y-10">
+            <div class="bg-white rounded-[3.5rem] border border-slate-200 p-10 lg:p-16 shadow-sm relative overflow-hidden">
+                <h3 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em] mb-12 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-[10px]">01</span>
+                    Core Identity
+                </h3>
+
+                <div class="space-y-12">
+                    <!-- Full Name -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Legal Name*</label>
+                        <input asp-for="FullName" required class="w-full border-b-2 border-slate-100 py-4 outline-none focus:border-emerald-500 font-black text-slate-800 text-3xl transition-all" placeholder="e.g. Alexander Pierce" />
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <!-- Email -->
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Corporate Email*</label>
+                            <input asp-for="Email" required class="w-full border-b border-slate-100 py-2 outline-none focus:border-emerald-500 font-bold text-slate-700 text-sm" placeholder="name@organization.com" />
+                        </div>
+                        <!-- Password -->
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Initial Security Phrase*</label>
+                            <input asp-for="Password" type="password" required class="w-full border-b border-slate-100 py-2 outline-none focus:border-emerald-500 font-bold text-slate-700 text-sm" placeholder="Minimum 8 characters" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACCESS NOTICE -->
+            <div class="bg-emerald-50/50 rounded-[2.5rem] p-10 border border-emerald-100/50 flex gap-6 items-start">
+                <div class="p-3 bg-white rounded-2xl shadow-sm text-emerald-600">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-black text-emerald-900 uppercase tracking-tight mb-2">Access Control Protocol</h4>
+                    <p class="text-xs text-emerald-700/70 leading-relaxed font-medium">
+                        New operators are required to change their security phrase upon first entry. System logs will track all requisition modifications performed by this identity.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: ORGANIZATIONAL LOGISTICS (5 Units) -->
+        <aside class="lg:col-span-5 space-y-10 sticky top-40">
+            
+            <!-- LOGISTICS BOX (DARK) -->
+            <div class="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden">
+                <i data-lucide="building-2" class="absolute -right-4 -top-4 w-32 h-32 text-white/5 pointer-events-none"></i>
+                
+                <h3 class="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-12">System Deployment</h3>
+                
+                <div class="space-y-10 relative z-10">
+                    <!-- Unit Selection -->
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Operational Unit (Department)</label>
+                        <select asp-for="DepartmentId" class="bg-transparent border-b border-white/20 w-full py-2 outline-none text-emerald-400 font-bold text-sm">
+                            <option value="" class="text-slate-900">Not Specified / General</option>
+                            @foreach(var item in (IEnumerable<Department>)ViewBag.Departments) {
+                                <option value="@item.Id" class="text-slate-900">@item.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Designation -->
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Official Designation</label>
+                        <select asp-for="DesignationId" class="bg-transparent border-b border-white/20 w-full py-2 outline-none text-emerald-400 font-bold text-sm">
+                            <option value="" class="text-slate-900">Not Specified</option>
+                            @foreach(var item in (IEnumerable<Designation>)ViewBag.Designations) {
+                                <option value="@item.Id" class="text-slate-900">@item.Title</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Pay Scale -->
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Personnel Grade (PayScale)</label>
+                        <select asp-for="PayScaleId" class="bg-transparent border-b border-white/20 w-full py-2 outline-none text-emerald-400 font-bold text-sm">
+                            <option value="" class="text-slate-900">Not Specified</option>
+                            @foreach(var item in (IEnumerable<PayScale>)ViewBag.PayScales) {
+                                <option value="@item.Id" class="text-slate-900">@item.Grade</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Role Assignment -->
+                    <div class="space-y-2 pt-10 border-t border-white/5">
+                        <label class="text-[9px] font-black text-emerald-500 uppercase tracking-widest">System Privilege Group*</label>
+                        <div class="grid grid-cols-1 gap-3 mt-4">
+                            @foreach(var role in (IEnumerable<string>)ViewBag.Roles) {
+                                <label class="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all group">
+                                    <span class="text-xs font-bold text-slate-300 group-hover:text-white uppercase tracking-tight">@role</span>
+                                    <input type="radio" name="RoleName" value="@role" class="w-4 h-4 border-white/20 bg-transparent text-emerald-500 focus:ring-0" @(role == "Recruiter" ? "checked" : "") />
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECURITY FOOTER -->
+            <div class="p-6 text-center">
+                <i data-lucide="fingerprint" class="w-8 h-8 text-slate-200 mx-auto mb-4"></i>
+                <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-relaxed">
+                    Identity snapshots are permanent. <br/> Cross-verify credentials before boarding.
+                </p>
+            </div>
+        </aside>
+    </div>
+</form>
+

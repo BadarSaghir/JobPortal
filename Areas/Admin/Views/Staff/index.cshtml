@@ -1,0 +1,94 @@
+@model Career635.Areas.Admin.Models.StaffIndexViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Personnel Management";
+}
+
+<div class="space-y-10 pb-20">
+    <!-- HEADER -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Internal Personnel</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2 pl-4 border-l-2 border-emerald-500">Authorized System Operators</p>
+        </div>
+        <a asp-action="Create" class="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:bg-slate-900 transition-all">
+            + Onboard Staff
+        </a>
+    </div>
+
+    <!-- FILTER HUD -->
+    <form method="get" class="bg-white p-4 rounded-[2rem] border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-[280px] relative group">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300"></i>
+            <input name="searchTerm" value="@Model.SearchTerm" type="text" placeholder="Search by name or email..." 
+                   class="w-full bg-slate-50 border-none rounded-xl pl-11 pr-4 py-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20" />
+        </div>
+        <button type="submit" class="px-8 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all">
+            Update View
+        </button>
+    </form>
+
+    <!-- REGISTRY TABLE -->
+    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100">
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Operator Identity</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Deployment</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Access Roles</th>
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach (var user in Model.Items)
+                    {
+                        <tr class="hover:bg-slate-50/30 transition-colors group">
+                            <td class="px-10 py-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-emerald-500 font-black text-xs">
+                                        @user.FullName.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-black text-slate-800">@user.FullName</p>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase">@user.Email</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <p class="text-xs font-bold text-slate-700">@user.Designation</p>
+                                <p class="text-[9px] text-slate-400 font-black uppercase">@user.Department</p>
+                            </td>
+                            <td class="px-6 py-6">
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach(var role in user.Roles) {
+                                        <span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[9px] font-black uppercase border border-emerald-100">@role</span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="px-10 py-6 text-right">
+                                <button class="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+                                    <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- PAGINATION -->
+        <div class="p-8 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page @Model.PageNumber of @Model.TotalPages</p>
+            <div class="flex gap-2">
+                <a href="?page=@(Model.PageNumber-1)" class="pag-btn @(Model.HasPreviousPage ? "" : "disabled")"><i data-lucide="chevron-left" class="w-4 h-4"></i></a>
+                <a href="?page=@(Model.PageNumber+1)" class="pag-btn @(Model.HasNextPage ? "" : "disabled")"><i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pag-btn { @@apply w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:border-emerald-600 hover:text-emerald-600 transition-all shadow-sm; }
+    .pag-btn.disabled { @@apply opacity-20 pointer-events-none bg-slate-50; }
+</style>

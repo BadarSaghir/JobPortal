@@ -1,0 +1,890 @@
+@model Career635.Areas.Candidate.Models.ApplicationSubmitViewModel
+
+@{
+    ViewData["Title"] = "Job Application Portal";
+}
+
+@section Styles {
+    <style>
+        .form-input { width: 100%; border-radius: 0.75rem; border: 1px solid #e2e8f0; background-color: #f8fafc; padding: 0.65rem 1rem; font-size: 0.85rem; transition: all 0.2s; }
+        .form-input:focus { background-color: #fff; border-color: #3b82f6; outline: none; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        .repeater-card { background: #fff; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-radius: 1rem; padding: 1.25rem; position: relative; margin-bottom: 1rem; border-left: 4px solid #3b82f6; }
+        .section-label { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; display: block; }
+        .input-validation-error { border-color: #ef4444 !important; background-color: #fffafb !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important; }
+        .form-section { background: #ffffff; padding: 2rem; border-radius: 1.5rem; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.02); margin-bottom: 2.5rem; }
+        .form-section-title { font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; }
+        .file-error-highlight { border: 2px solid #ef4444; border-radius: 1rem; background-color: #fff5f5; transition: all 0.2s; }
+    </style>
+}
+
+<div class="max-w-6xl mx-auto py-8 px-4 pb-24">
+    <div class="mb-8 text-center md:text-left">
+        <h1 class="text-4xl font-black text-slate-900 tracking-tight">Job Application Portal</h1>
+        <p class="text-slate-500 mt-2 font-medium">Please fill out all required fields marked with an asterisk (<span class="text-red-500">*</span>). Ensure all details are accurate before submitting.</p>
+    </div>
+
+    <!-- GLOBAL ASP.NET ERROR BANNER (Server Side) -->
+    <div asp-validation-summary="All" class="mb-8 p-6 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl shadow-sm @(ViewData.ModelState.IsValid ? "hidden" : "block")">
+        <h3 class="font-black text-lg mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5"></i> Server Submission Failed</h3>
+        <p class="text-sm font-bold">Please correct the highlighted errors below. Note: You must re-select your file uploads for security reasons.</p>
+    </div>
+
+    <form id="applicationForm" asp-action="Submit" enctype="multipart/form-data" method="post" novalidate>
+        <input type="hidden" asp-for="JobId" />
+
+        <div class="flex flex-col items-end pt-4">
+            <div id="formErrorBox" class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-lg hidden w-full text-left">
+                <p class="text-red-700 font-bold mb-1 flex items-center gap-2"><i data-lucide="x-circle" class="w-4 h-4"></i> Form cannot be submitted yet</p>
+                <div id="formErrorMsg" class="text-red-600 text-sm list-inside"></div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 1: IDENTITY ================= -->
+        <div class="form-section">
+            <h3 class="form-section-title"><i data-lucide="user" class="text-blue-500 w-6 h-6"></i> Personal Identity</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="md:col-span-2">
+                    <label asp-for="FullName" class="section-label text-slate-700">Full Name <span class="text-red-500">*</span></label>
+                    <input asp-for="FullName" class="form-input required-check" required maxlength="200" placeholder="Enter full name" />
+                </div>
+                <div>
+                    <label asp-for="CNICNumber" class="section-label text-slate-700">CNIC Number <span class="text-red-500">*</span></label>
+                    <input asp-for="CNICNumber" class="form-input required-check cnic-mask" placeholder="00000-0000000-0" required maxlength="15" />
+                </div>
+                <div>
+                    <label asp-for="FatherName" class="section-label text-slate-700">Father's Name <span class="text-red-500">*</span></label>
+                    <input asp-for="FatherName" class="form-input required-check" required maxlength="200" />
+                </div>
+                <div>
+                    <label asp-for="FatherCNIC" class="section-label">Father's CNIC</label>
+                    <input asp-for="FatherCNIC" class="form-input cnic-mask" placeholder="00000-0000000-0" maxlength="15" />
+                </div>
+                <div>
+                    <label asp-for="DateOfBirth" class="section-label text-slate-700">Date of Birth <span class="text-red-500">*</span></label>
+                    <input asp-for="DateOfBirth" type="text" class="datepicker form-input required-check bg-white" required placeholder="YYYY-MM-DD" />
+                </div>
+                <div>
+                    <label asp-for="Gender" class="section-label text-slate-700">Gender <span class="text-red-500">*</span></label>
+                    <select asp-for="Gender" class="form-input required-check" required>
+                        <option value="">-- Select Gender --</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                <div>
+                    <label asp-for="MaritalStatus" class="section-label text-slate-700">Marital Status <span class="text-red-500">*</span></label>
+                    <select asp-for="MaritalStatus" class="form-input required-check" required>
+                        <option value="">-- Select Status --</option>
+                        <option value="Single">Single</option>
+                        <option value="Married">Married</option>
+                        <option value="Widow">Widow</option>
+                        <option value="Divorced">Divorced</option>
+                        <option value="Separated">Separated</option>
+                    </select>
+                </div>
+                <div>
+                    <label asp-for="Religion" class="section-label text-slate-700">Religion <span class="text-red-500">*</span></label>
+                    <select asp-for="Religion" class="form-input required-check" required>
+                        <option value="">-- Select Religion --</option>
+                        <option value="Muslim">Muslim</option>
+                        <option value="Christian">Christian</option>
+                        <option value="Sikh">Sikh</option>
+                        <option value="Hindu">Hindu</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+                <div><label asp-for="Caste" class="section-label">Caste</label><input asp-for="Caste" class="form-input" maxlength="100" /></div>
+                <div><label asp-for="Sect" class="section-label">Sect</label><input asp-for="Sect" class="form-input" maxlength="100" /></div>
+                <div><label asp-for="PECNumber" class="section-label">PEC Number</label><input asp-for="PECNumber" class="form-input" maxlength="50" /></div>
+                <div>
+                    <label asp-for="ContactNo" class="section-label text-slate-700">Mobile Number <span class="text-red-500">*</span></label>
+                    <input asp-for="ContactNo" type="tel" class="form-input required-check digits-only" placeholder="e.g. 03001234567" required maxlength="20" />
+                </div>
+                <div>
+                    <label asp-for="Email" class="section-label">Email</label>
+                    <input asp-for="Email" type="email" class="form-input email-check" placeholder="example@email.com" maxlength="256" />
+                </div>
+                <div>
+                    <label asp-for="CandidateType" class="section-label">Type</label>
+                    <select asp-for="CandidateType" class="form-input"><option value="Candidate">Candidate</option></select>
+                </div>
+                <div><label asp-for="Accommodation" class="section-label">Accommodation Needed?</label><input asp-for="Accommodation" class="form-input" maxlength="100" placeholder="Yes / No" /></div>
+                <div class="md:col-span-3">
+                    <label asp-for="PresentAddress" class="section-label text-slate-700">Present Address <span class="text-red-500">*</span></label>
+                    <textarea asp-for="PresentAddress" rows="2" class="form-input required-check" required maxlength="1000" placeholder="Enter complete present address"></textarea>
+                </div>
+                <div class="md:col-span-3">
+                    <label asp-for="PermanentAddress" class="section-label text-slate-700">Permanent Address <span class="text-red-500">*</span></label>
+                    <textarea asp-for="PermanentAddress" rows="2" class="form-input required-check" required maxlength="1000" placeholder="Enter complete permanent address"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 2: FAMILY & SIBLINGS ================= -->
+        <div class="form-section">
+            <h3 class="form-section-title"><i data-lucide="users" class="text-blue-500 w-6 h-6"></i> Family Summary</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                    <span class="section-label mb-3">Brothers Counts</span>
+                    <div class="flex gap-2 justify-center">
+                        <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">TOTAL</span><input asp-for="BrothersTotal" type="number" min="0" max="50" class="form-input text-center" value="0" /></div>
+                        <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">MARRIED</span><input asp-for="BrothersMarried" type="number" min="0" max="50" class="form-input text-center" value="0" /></div>
+                        <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">UNMARR</span><input asp-for="BrothersUnmarried" type="number" min="0" max="50" class="form-input text-center" value="0" /></div>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                    <span class="section-label mb-3">Sisters Counts</span>
+                    <div class="flex gap-2 justify-center">
+                        <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">TOTAL</span><input asp-for="SistersTotal" type="number" min="0" max="50" class="form-input text-center" value="0" /></div>
+                        <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">MARRIED</span><input asp-for="SistersMarried" type="number" min="0" max="50" class="form-input text-center" value="0" /></div>
+                        <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">UNMARR</span><input asp-for="SistersUnmarried" type="number" min="0" max="50" class="form-input text-center" value="0" /></div>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                    <span class="section-label mb-3">Children Counts</span>
+                    <div class="flex gap-2 justify-center">
+                        <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">TOTAL</span><input asp-for="ChildrenTotal" type="number" min="0" max="50" class="form-input text-center" value="0" /></div>
+                        <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">MARRIED</span><input asp-for="ChildrenMarried" type="number" min="0" max="50" class="form-input text-center" value="0" /></div>
+                        <div class="w-full"><span class="text-[8px] text-slate-400 font-bold">UNMARR</span><input asp-for="ChildrenUnmarried" type="number" min="0" max="50" class="form-input text-center" value="0" /></div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-4"><h4 class="font-bold text-slate-700">Sibling Details (Optional)</h4><button type="button" onclick="addDynamicRow('sib-container', 'sib-template', 'Siblings')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors">+ ADD SIBLING</button></div>
+                <div id="sib-container" class="space-y-4">
+                    @for (int i = 0; i < Model.Siblings.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'sib-container', 'Siblings')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
+                                <input name="Siblings[@i].Name" value="@Model.Siblings[i].Name" class="form-input sibling-name-req" placeholder="Name * (if any data entered)" maxlength="200" />
+                                <input name="Siblings[@i].CNIC" value="@Model.Siblings[i].CNIC" class="form-input cnic-mask" placeholder="CNIC" maxlength="15" />
+                                <select name="Siblings[@i].Gender" class="form-input w-full">
+                                    <option value="Male" selected="@(Model.Siblings[i].Gender == "Male")">Male</option>
+                                    <option value="Female" selected="@(Model.Siblings[i].Gender == "Female")">Female</option>
+                                </select>
+                                <select name="Siblings[@i].MaritalStatus" class="form-input w-full">
+                                    <option value="Single" selected="@(Model.Siblings[i].MaritalStatus == "Single")">Single</option>
+                                    <option value="Married" selected="@(Model.Siblings[i].MaritalStatus == "Married")">Married</option>
+                                    <option value="Widow" selected="@(Model.Siblings[i].MaritalStatus == "Widow")">Widow</option>
+                                    <option value="Divorced" selected="@(Model.Siblings[i].MaritalStatus == "Divorced")">Divorced</option>
+                                </select>
+                                <input name="Siblings[@i].DateOfBirth" value="@Model.Siblings[i].DateOfBirth.ToString("yyyy-MM-dd")" class="datepicker form-input bg-white sibling-dob-req" placeholder="DOB * (required if name filled)" />
+                                <input name="Siblings[@i].Occupation" value="@Model.Siblings[i].Occupation" class="form-input" placeholder="Occupation" maxlength="150" />
+                                <input name="Siblings[@i].Organization" value="@Model.Siblings[i].Organization" class="form-input" placeholder="Organization" maxlength="250" />
+                                <input name="Siblings[@i].Designation" value="@Model.Siblings[i].Designation" class="form-input" placeholder="Designation" maxlength="250" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 3: ACADEMIC & EMPLOYMENT ================= -->
+        <div class="form-section">
+            <h3 class="form-section-title"><i data-lucide="book-open" class="text-blue-500 w-6 h-6"></i> Academic & Experience</h3>
+
+            <div class="mb-12">
+                <div class="flex justify-between items-center mb-4"><h4 class="font-bold text-slate-700">Academic History</h4><button type="button" onclick="addDynamicRow('edu-container', 'edu-template', 'Educations')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100">+ ADD EDUCATION</button></div>
+                <div id="edu-container" class="space-y-4">
+                    @for (int i = 0; i < Model.Educations.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'edu-container', 'Educations')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                <input name="Educations[@i].Qualification" value="@Model.Educations[i].Qualification" class="form-input edu-qualification-req" placeholder="Qualification * (if any data entered)" maxlength="100" />
+                                <input name="Educations[@i].MajorField" value="@Model.Educations[i].MajorField" class="form-input edu-major-req" placeholder="Major Field * (required if qualification filled)" maxlength="200" />
+                                <input name="Educations[@i].BoardUniversity" value="@Model.Educations[i].BoardUniversity" class="form-input edu-board-req" placeholder="University/Board * (required if qualification filled)" maxlength="200" />
+                                <input name="Educations[@i].CgpaPercentage" value="@Model.Educations[i].CgpaPercentage" class="form-input edu-cgpa-req" placeholder="CGPA / Percentage * (required if qualification filled)" maxlength="20" />
+                                <input name="Educations[@i].FromDate" value="@Model.Educations[i].FromDate.ToString("yyyy-MM-dd")" class="datepicker form-input bg-white edu-from-req" placeholder="From Date *" />
+                                <input name="Educations[@i].ToDate" value="@Model.Educations[i].ToDate.ToString("yyyy-MM-dd")" class="datepicker form-input bg-white edu-to-req" placeholder="To Date *" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-4"><h4 class="font-bold text-slate-700">Work Experience</h4><button type="button" onclick="addDynamicRow('exp-container', 'exp-template', 'Experiences')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100">+ ADD EXPERIENCE</button></div>
+                <div id="exp-container" class="space-y-4">
+                    @for (int i = 0; i < Model.Experiences.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'exp-container', 'Experiences')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <input name="Experiences[@i].OrganizationName" value="@Model.Experiences[i].OrganizationName" class="form-input exp-org-req" placeholder="Organization Name * (if any data entered)" maxlength="250" />
+                                <input name="Experiences[@i].Designation" value="@Model.Experiences[i].Designation" class="form-input exp-designation-req" placeholder="Designation * (required if org filled)" maxlength="150" />
+                                <input name="Experiences[@i].FromDate" value="@Model.Experiences[i].FromDate.ToString("yyyy-MM-dd")" class="datepicker form-input bg-white exp-from-req" placeholder="From Date *" />
+                                <input name="Experiences[@i].ToDate" value="@Model.Experiences[i].ToDate?.ToString("yyyy-MM-dd")" class="datepicker form-input bg-white" placeholder="To Date (Leave blank if current)" />
+                                <textarea name="Experiences[@i].KeyResponsibilities" class="form-input" placeholder="Key Responsibilities" maxlength="2000">@Model.Experiences[i].KeyResponsibilities</textarea>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 4: SKILLS, CERTS, RELATIVES ================= -->
+        <div class="form-section">
+            <h3 class="form-section-title"><i data-lucide="award" class="text-blue-500 w-6 h-6"></i> Skills & Certifications</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div>
+                    <div class="flex justify-between mb-2 items-center"><h4 class="font-bold text-slate-700">Skills</h4><button type="button" onclick="addDynamicRow('skill-container', 'skill-template', 'Skills')" class="text-blue-600 font-bold text-[10px] bg-blue-50 px-3 py-1 rounded-md">+ ADD</button></div>
+                    <div id="skill-container" class="space-y-2">
+                        @for (int i = 0; i < Model.Skills.Count; i++) {
+                            <div class="flex gap-2 items-center" data-index="@i">
+                                <input name="Skills[@i].SkillName" value="@Model.Skills[i].SkillName" class="form-input skill-name-req" placeholder="Skill Name * (if any data entered)" maxlength="100" />
+                                <select name="Skills[@i].Proficiency" class="form-input w-32 skill-proficiency-req">
+                                    <option value="Beginner" selected="@(Model.Skills[i].Proficiency == "Beginner")">Beginner</option>
+                                    <option value="Intermediate" selected="@(Model.Skills[i].Proficiency == "Intermediate")">Intermediate</option>
+                                    <option value="Expert" selected="@(Model.Skills[i].Proficiency == "Expert")">Expert</option>
+                                </select>
+                                <button type="button" onclick="removeRow(this, 'skill-container', 'Skills')" class="text-red-500 hover:text-red-700 font-bold px-2 text-xl">×</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-2 items-center"><h4 class="font-bold text-slate-700">Certifications</h4><button type="button" onclick="addDynamicRow('cert-container', 'cert-template', 'Certifications')" class="text-blue-600 font-bold text-[10px] bg-blue-50 px-3 py-1 rounded-md">+ ADD</button></div>
+                    <div id="cert-container" class="space-y-2">
+                        @for (int i = 0; i < Model.Certifications.Count; i++) {
+                            <div class="flex gap-2 items-center" data-index="@i">
+                                <input name="Certifications[@i].CertificateName" value="@Model.Certifications[i].CertificateName" class="form-input cert-name-req" placeholder="Certificate Name * (if any data entered)" maxlength="200" />
+                                <input name="Certifications[@i].IssuingBody" value="@Model.Certifications[i].IssuingBody" class="form-input cert-issuer-req" placeholder="Issuing Body * (required if cert name filled)"  maxlength="200" />
+                                <button type="button" onclick="removeRow(this, 'cert-container', 'Certifications')" class="text-red-500 hover:text-red-700 font-bold px-2 text-xl">×</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-4"><h4 class="font-bold text-slate-700">Internal Relatives (If any working here)</h4><button type="button" onclick="addDynamicRow('rel-container', 'rel-template', 'InternalRelatives')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100">+ ADD RELATIVE</button></div>
+                <div id="rel-container" class="space-y-4">
+                    @for (int i = 0; i < Model.InternalRelatives.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'rel-container', 'InternalRelatives')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                                <input name="InternalRelatives[@i].RelativeName" value="@Model.InternalRelatives[i].RelativeName" class="form-input rel-name-req" placeholder="Relative Name * (if any data entered)" maxlength="200" />
+                                <input name="InternalRelatives[@i].Designation" value="@Model.InternalRelatives[i].Designation" class="form-input" placeholder="Designation" maxlength="100" />
+                                <input name="InternalRelatives[@i].Department" value="@Model.InternalRelatives[i].Department" class="form-input" placeholder="Department" maxlength="100" />
+                                <input name="InternalRelatives[@i].PayScale" value="@Model.InternalRelatives[i].PayScale" class="form-input" placeholder="Pay Scale" maxlength="50" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 5: DETAILS & UPLOADS ================= -->
+        <div class="form-section mb-10">
+            <h3 class="form-section-title"><i data-lucide="file-text" class="text-blue-500 w-6 h-6"></i> Additional Details & Documents</h3>
+
+            <div class="mb-10">
+                <div class="flex justify-between mb-4"><h4 class="font-bold text-slate-700">Professional Achievements</h4><button type="button" onclick="addDynamicRow('ach-container', 'ach-template', 'Achievements')" class="text-[10px] font-black bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100">+ ADD ACHIEVEMENT</button></div>
+                <div id="ach-container" class="space-y-4">
+                    @for (int i = 0; i < Model.Achievements.Count; i++) {
+                        <div class="repeater-card" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'ach-container', 'Achievements')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+                                <input name="Achievements[@i].Title" value="@Model.Achievements[i].Title" class="form-input ach-title-req" placeholder="Achievement Title * (if any data entered)" maxlength="200" />
+                                <input name="Achievements[@i].DateReceived" value="@Model.Achievements[i].DateReceived.ToString("yyyy-MM-dd")" class="datepicker form-input bg-white ach-date-req" placeholder="Date Received *" />
+                                <textarea name="Achievements[@i].Description" class="form-input" rows="1" placeholder="Short Description" maxlength="2000">@Model.Achievements[i].Description</textarea>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                    <h4 class="font-bold mb-4 text-slate-700">Military Detail (If Any)</h4>
+                    <div class="grid grid-cols-1 gap-4">
+                        <input asp-for="ArmyNumber" class="form-input" placeholder="Army Number" maxlength="50" />
+                        <input asp-for="ArmyUnit" class="form-input" placeholder="Unit" maxlength="100" />
+                        <input asp-for="ArmyCharacter" class="form-input" placeholder="Character" maxlength="100" />
+                        <input asp-for="ArmyPayScale" class="form-input" placeholder="Pay Scale" maxlength="50" />
+                    </div>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                    <h4 class="font-bold mb-4 text-slate-700">Financials</h4>
+                    <div class="grid grid-cols-1 gap-4">
+                        <input asp-for="CurrentSalary" type="number" min="0" class="form-input" placeholder="Current Salary (PKR)" />
+                        <input asp-for="ExpectedSalary" type="number" min="0" class="form-input" placeholder="Expected Salary (PKR)" />
+                        <select asp-for="FamilyIncomeDetail" class="form-input">
+                            <option value="">-- Monthly Family Income --</option>
+                            <option value="Less than 50k PKR">Less than 50k PKR</option>
+                            <option value="Between 50k and 1 Lac PKR">Between 50k and 1 Lac PKR</option>
+                            <option value="Between 1Lac and 1.5 Lac PKR">Between 1Lac and 1.5 Lac PKR</option>
+                            <option value="Between 2Lac and 3 Lac PKR">Between 2Lac and 3 Lac PKR</option>
+                            <option value="More than 3Lac PKR">More than 3Lac PKR</option>
+                        </select>
+                        <input asp-for="OtherFacilities" class="form-input" placeholder="Facilities Provided" maxlength="500" />
+                        <textarea asp-for="OtherBenefits" rows="1" class="form-input" placeholder="Current Benefits (Car, Fuel, etc.)" maxlength="500"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MANDATORY FILES UPLOAD SECTION -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 p-6 bg-emerald-50/30 rounded-3xl border border-emerald-100 relative">
+                <div class="space-y-2">
+                    <label class="section-label text-emerald-800">Passport Photo <span class="text-red-500">*</span></label>
+                    <p class="text-[9px] text-emerald-700 font-bold mb-2">Max 200KB. Allowed: JPG, PNG, WEBP</p>
+                    <input type="file" id="PassportPhotoInput" name="PassportPhoto" required class="required-check filepond-input" />
+                </div>
+                <div class="space-y-2">
+                    <label class="section-label text-emerald-800">Updated CV / Resume <span class="text-red-500">*</span></label>
+                    <p class="text-[9px] text-emerald-700 font-bold mb-2">Max 500KB. Allowed: PDF, JPG, PNG, WEBP</p>
+                    <input type="file" id="CvFileInput" name="CvFile" required class="required-check filepond-input" />
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h4 class="font-bold text-slate-700">Supporting Documents (Degrees/Certs)</h4>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Max 150KB per file. Formats: PDF, JPG, PNG</p>
+                    </div>
+                    <button type="button" onclick="addDynamicRow('doc-container', 'doc-template', 'DocumentAttachments')" class="text-[10px] font-black bg-emerald-50 text-emerald-600 px-4 py-2 rounded-lg hover:bg-emerald-100">+ ADD DOCUMENT</button>
+                </div>
+                <div id="doc-container" class="space-y-4">
+                    @for (int i = 0; i < Model.DocumentAttachments.Count; i++) {
+                        <div class="repeater-card border-l-emerald-500 bg-emerald-50/10" data-index="@i">
+                            <button type="button" onclick="removeRow(this, 'doc-container', 'DocumentAttachments')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+                            <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mt-4">
+                                <div>
+                                    <label class="section-label">Document Category <span class="text-red-500">*</span></label>
+                                    <select name="DocumentAttachments[@i].DocumentType" class="form-input required-check" required>
+                                        <option value="">-- Select Type --</option>
+                                        <option value="Education" selected="@(Model.DocumentAttachments[i].DocumentType == "Education")">Education (Degrees/Transcripts)</option>
+                                        <option value="Experience" selected="@(Model.DocumentAttachments[i].DocumentType == "Experience")">Experience Letters</option>
+                                        <option value="Degree" selected="@(Model.DocumentAttachments[i].DocumentType == "Degree")">Professional Degree</option>
+                                        <option value="Certificates" selected="@(Model.DocumentAttachments[i].DocumentType == "Certificates")">Certifications</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="section-label">Select Files (Max 150KB/file) <span class="text-red-500">*</span></label>
+                                    <input type="file" name="DocumentAttachments[@i].Files" class="form-input bg-white doc-file-input required-check" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="validateDocumentFiles(this)" />
+                                    <div class="file-info-text text-[10px] mt-1 text-slate-500 font-bold">Waiting for selection...</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- SUBMIT BUTTON AREA -->
+        <div class="flex flex-col items-end pt-4">
+            <button type="submit" id="btnFinalSubmit" class="w-full md:w-auto bg-blue-600 text-white font-black text-lg py-5 px-16 rounded-2xl shadow-xl hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-3">
+                Submit Application <i data-lucide="check-circle" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- =============================================
+     TEMPLATES (Hidden Blueprints)
+     ============================================= -->
+
+<template id="sib-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'sib-container', 'Siblings')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
+            <input name="Siblings[{idx}].Name" class="form-input sibling-name-req" placeholder="Name * (if any data entered)" maxlength="200" />
+            <input name="Siblings[{idx}].CNIC" class="form-input cnic-mask" placeholder="CNIC" maxlength="15" />
+            <select name="Siblings[{idx}].Gender" class="form-input w-full"><option value="Male">Male</option><option value="Female">Female</option></select>
+            <select name="Siblings[{idx}].MaritalStatus" class="form-input w-full"><option value="Single">Single</option><option value="Married">Married</option><option value="Widow">Widow</option><option value="Divorced">Divorced</option></select>
+            <input name="Siblings[{idx}].DateOfBirth" class="datepicker form-input bg-white sibling-dob-req" placeholder="DOB * (required if name filled)" />
+            <input name="Siblings[{idx}].Occupation" class="form-input" placeholder="Occupation" maxlength="150" />
+            <input name="Siblings[{idx}].Organization" class="form-input" placeholder="Organization" maxlength="250" />
+            <input name="Siblings[{idx}].Designation" class="form-input" placeholder="Designation" maxlength="250" />
+        </div>
+    </div>
+</template>
+
+<template id="edu-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'edu-container', 'Educations')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <input name="Educations[{idx}].Qualification" class="form-input edu-qualification-req" placeholder="Qualification * (if any data entered)" maxlength="100" />
+            <input name="Educations[{idx}].MajorField" class="form-input edu-major-req" placeholder="Major Field * (required if qualification filled)" maxlength="200" />
+            <input name="Educations[{idx}].BoardUniversity" class="form-input edu-board-req" placeholder="University/Board * (required if qualification filled)" maxlength="200" />
+            <input name="Educations[{idx}].CgpaPercentage" class="form-input edu-cgpa-req" placeholder="CGPA / Percentage * (required if qualification filled)" maxlength="20" />
+            <input name="Educations[{idx}].FromDate" class="datepicker form-input bg-white edu-from-req" placeholder="From Date *" />
+            <input name="Educations[{idx}].ToDate" class="datepicker form-input bg-white edu-to-req" placeholder="To Date *" />
+        </div>
+    </div>
+</template>
+
+<template id="exp-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'exp-container', 'Experiences')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <input name="Experiences[{idx}].OrganizationName" class="form-input exp-org-req" placeholder="Organization Name * (if any data entered)" maxlength="250" />
+            <input name="Experiences[{idx}].Designation" class="form-input exp-designation-req" placeholder="Designation * (required if org filled)" maxlength="150" />
+            <input name="Experiences[{idx}].FromDate" class="datepicker form-input bg-white exp-from-req" placeholder="From Date *" />
+            <input name="Experiences[{idx}].ToDate" class="datepicker form-input bg-white" placeholder="To Date" />
+            <textarea name="Experiences[{idx}].KeyResponsibilities" class="form-input" placeholder="Responsibilities" maxlength="2000"></textarea>
+        </div>
+    </div>
+</template>
+
+<template id="skill-template">
+    <div class="flex gap-2 mb-2 items-center" data-index="{idx}">
+        <input name="Skills[{idx}].SkillName" class="form-input skill-name-req" placeholder="Skill Name * (if any data entered)" maxlength="100" />
+        <select name="Skills[{idx}].Proficiency" class="form-input w-32 skill-proficiency-req">
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Expert">Expert</option>
+        </select>
+        <button type="button" onclick="removeRow(this, 'skill-container', 'Skills')" class="text-red-500 hover:text-red-700 font-bold px-2 text-xl">×</button>
+    </div>
+</template>
+
+<template id="cert-template">
+    <div class="flex gap-2 mb-2 items-center" data-index="{idx}">
+        <input name="Certifications[{idx}].CertificateName" class="form-input cert-name-req" placeholder="Certificate Name * (if any data entered)" maxlength="200" />
+        <input name="Certifications[{idx}].IssuingBody" class="form-input cert-issuer-req" placeholder="Issuing Body * (required if cert name filled)" maxlength="200" />
+        <button type="button" onclick="removeRow(this, 'cert-container', 'Certifications')" class="text-red-500 hover:text-red-700 font-bold px-2 text-xl">×</button>
+    </div>
+</template>
+
+<template id="rel-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'rel-container', 'InternalRelatives')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <input name="InternalRelatives[{idx}].RelativeName" class="form-input rel-name-req" placeholder="Relative Name * (if any data entered)" maxlength="200" />
+            <input name="InternalRelatives[{idx}].Designation" class="form-input" placeholder="Title" maxlength="100" />
+            <input name="InternalRelatives[{idx}].Department" class="form-input" placeholder="Department" maxlength="100" />
+            <input name="InternalRelatives[{idx}].PayScale" class="form-input" placeholder="Scale" maxlength="50" />
+        </div>
+    </div>
+</template>
+
+<template id="ach-template">
+    <div class="repeater-card" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'ach-container', 'Achievements')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+            <input name="Achievements[{idx}].Title" class="form-input ach-title-req" placeholder="Achievement Title * (if any data entered)" maxlength="200" />
+            <input name="Achievements[{idx}].DateReceived" class="datepicker form-input bg-white ach-date-req" placeholder="Date Received *" />
+            <textarea name="Achievements[{idx}].Description" class="form-input" placeholder="Details" maxlength="2000"></textarea>
+        </div>
+    </div>
+</template>
+
+<template id="doc-template">
+    <div class="repeater-card border-l-emerald-500 bg-emerald-50/10" data-index="{idx}">
+        <button type="button" onclick="removeRow(this, 'doc-container', 'DocumentAttachments')" class="absolute top-3 right-3 text-red-400 hover:text-red-600 font-bold text-xs">REMOVE</button>
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mt-4">
+            <div>
+                <label class="section-label">Document Category <span class="text-red-500">*</span></label>
+                <select name="DocumentAttachments[{idx}].DocumentType" class="form-input required-check" required>
+                    <option value="">-- Select Type --</option>
+                    <option value="Education">Education (Degrees/Transcripts)</option>
+                    <option value="Experience">Experience Letters</option>
+                    <option value="Degree">Professional Degree</option>
+                    <option value="Certificates">Certifications</option>
+                </select>
+            </div>
+            <div>
+                <label class="section-label">Select Files (Max 150KB/file) <span class="text-red-500">*</span></label>
+                <input type="file" name="DocumentAttachments[{idx}].Files" class="form-input bg-white doc-file-input required-check" multiple required accept=".pdf,.jpg,.jpeg,.png" onchange="validateDocumentFiles(this)" />
+                <div class="file-info-text text-[10px] mt-1 text-slate-500 font-bold">Waiting for selection...</div>
+            </div>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        let pondPhoto = null;
+        let pondCV = null;
+
+        function reindexContainer(containerId, baseName) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const rows = container.children;
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                row.querySelectorAll('input, select, textarea').forEach(el => {
+                    const name = el.getAttribute('name');
+                    if (name && name.startsWith(baseName + '[')) {
+                        const newName = name.replace(/\[.*?\]/, `[${i}]`);
+                        el.setAttribute('name', newName);
+                    }
+                });
+                row.setAttribute('data-index', i);
+            }
+        }
+
+        function addDynamicRow(containerId, templateId, baseName) {
+            const container = document.getElementById(containerId);
+            const template = document.getElementById(templateId).innerHTML;
+            const currentCount = container.children.length;
+            const newRowHtml = template.replace(/{idx}/g, currentCount);
+            container.insertAdjacentHTML('beforeend', newRowHtml);
+            if (typeof flatpickr !== 'undefined') flatpickr(".datepicker", { dateFormat: "Y-m-d", maxDate: "today" });
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Re-attach validation events
+            $(container).find('.required-check, .cnic-mask, .digits-only, .email-check, .edu-qualification-req, .edu-major-req, .edu-board-req, .edu-cgpa-req, .edu-from-req, .edu-to-req, .exp-org-req, .exp-designation-req, .exp-from-req, .sibling-name-req, .sibling-dob-req, .skill-name-req, .skill-proficiency-req, .cert-name-req, .cert-issuer-req, .rel-name-req, .ach-title-req, .ach-date-req').off('blur change input').on('blur change input', function() { validateFieldRealTime(this); });
+        }
+
+        function removeRow(btn, containerId, baseName) {
+            const row = btn.closest('.repeater-card') || btn.parentElement;
+            if (row) {
+                row.remove();
+                reindexContainer(containerId, baseName);
+            }
+        }
+
+        function validateDocumentFiles(input) {
+            const maxSize = 150 * 1024;
+            const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+            const files = input.files;
+            let errorMsg = "";
+
+            for (let i = 0; i < files.length; i++) {
+                const ext = files[i].name.split('.').pop().toLowerCase();
+                if (!allowedExtensions.includes(ext)) {
+                    errorMsg = `File "${files[i].name}" has an invalid format. Only PDF, JPG, and PNG are allowed.`;
+                    break;
+                }
+                if (files[i].size > maxSize) {
+                    errorMsg = `File "${files[i].name}" is too large (${(files[i].size / 1024).toFixed(1)}KB). Max allowed is 150KB.`;
+                    break;
+                }
+            }
+
+            const label = input.parentElement.querySelector('.file-info-text');
+            if (errorMsg) {
+                alert(errorMsg);
+                input.value = "";
+                $(input).addClass('input-validation-error');
+                label.innerText = "Error: Invalid file removed.";
+                label.classList.replace('text-emerald-600', 'text-red-500');
+            } else if (files.length > 0) {
+                $(input).removeClass('input-validation-error');
+                label.innerText = `${files.length} file(s) selected - Validated ✓`;
+                label.classList.remove('text-red-500', 'text-slate-500');
+                label.classList.add('text-emerald-600');
+            }
+            validateFieldRealTime(input);
+        }
+
+        // Core validation: required / CNIC / mobile / email / conditional required for dynamic rows
+        function validateFieldRealTime(el) {
+            const $el = $(el);
+            if ($el.hasClass('filepond--browser') || $el.closest('.filepond--root').length) return true;
+
+            let isValid = true;
+            let val = $el.val() ? $el.val().trim() : "";
+
+            // 1. Standard required attribute
+            if ($el.is('[required]') && val === "") isValid = false;
+
+            // 2. Conditional validations for dynamic rows
+            const row = $el.closest('.repeater-card');
+            if (row.length) {
+                // Helper to validate a field inside the same row
+        const validateFieldInRow = (selector, errorCondition) => {
+    const field = row.find(selector);
+    if (field.length && errorCondition(field)) {
+        field.addClass('input-validation-error');
+        // Only mark the current field invalid if it's the one being validated
+        if (field[0] === el) {
+            isValid = false;
+        }
+    } else if (field.length) {
+        field.removeClass('input-validation-error');
+    }
+};
+
+                // --- Education Row ---
+                const eduQual = row.find('.edu-qualification-req');
+                if (eduQual.length && eduQual.val() && eduQual.val().trim() !== "") {
+                    validateFieldInRow('.edu-major-req', f => !f.val() || f.val().trim() === "");
+                    validateFieldInRow('.edu-board-req', f => !f.val() || f.val().trim() === "");
+                    validateFieldInRow('.edu-cgpa-req', f => !f.val() || f.val().trim() === "");
+                    validateFieldInRow('.edu-from-req', f => !f.val() || f.val().trim() === "");
+                    validateFieldInRow('.edu-to-req', f => !f.val() || f.val().trim() === "");
+                } else {
+                    row.find('.edu-major-req, .edu-board-req, .edu-cgpa-req, .edu-from-req, .edu-to-req').removeClass('input-validation-error');
+                }
+
+                // --- Experience Row ---
+                const expOrg = row.find('.exp-org-req');
+                if (expOrg.length && expOrg.val() && expOrg.val().trim() !== "") {
+                    validateFieldInRow('.exp-designation-req', f => !f.val() || f.val().trim() === "");
+                    validateFieldInRow('.exp-from-req', f => !f.val() || f.val().trim() === "");
+                } else {
+                    row.find('.exp-designation-req, .exp-from-req').removeClass('input-validation-error');
+                }
+
+                // --- Sibling Row ---
+                const sibName = row.find('.sibling-name-req');
+                if (sibName.length && sibName.val() && sibName.val().trim() !== "") {
+                    validateFieldInRow('.sibling-dob-req', f => !f.val() || f.val().trim() === "");
+                } else {
+                    row.find('.sibling-dob-req').removeClass('input-validation-error');
+                }
+
+                // --- Skill Row ---
+                const skillName = row.find('.skill-name-req');
+                if (skillName.length && skillName.val() && skillName.val().trim() !== "") {
+                    validateFieldInRow('.skill-proficiency-req', f => !f.val() || f.val().trim() === "");
+                } else {
+                    row.find('.skill-proficiency-req').removeClass('input-validation-error');
+                }
+
+                // --- Certification Row ---
+                const certName = row.find('.cert-name-req');
+                if (certName.length && certName.val() && certName.val().trim() !== "") {
+                    validateFieldInRow('.cert-issuer-req', f => !f.val() || f.val().trim() === "");
+                } else {
+                    row.find('.cert-issuer-req').removeClass('input-validation-error');
+                }
+
+                // --- Internal Relative Row --- (no extra fields required besides name)
+                // --- Achievement Row ---
+                const achTitle = row.find('.ach-title-req');
+                if (achTitle.length && achTitle.val() && achTitle.val().trim() !== "") {
+                    validateFieldInRow('.ach-date-req', f => !f.val() || f.val().trim() === "");
+                } else {
+                    row.find('.ach-date-req').removeClass('input-validation-error');
+                }
+            }
+
+            // 3. CNIC format
+            if (isValid && $el.hasClass('cnic-mask') && val !== "") {
+                const cnicRegex = /^\d{5}-\d{7}-\d{1}$/;
+                if (!cnicRegex.test(val)) isValid = false;
+            }
+
+            // 4. Digits only (mobile)
+            if (isValid && $el.hasClass('digits-only') && val !== "") {
+                const digitsRegex = /^\d+$/;
+                if (!digitsRegex.test(val)) isValid = false;
+            }
+
+            // 5. Email format
+            if (isValid && $el.hasClass('email-check') && val !== "") {
+                const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+                if (!emailRegex.test(val)) isValid = false;
+            }
+
+            // 6. File inputs that are required
+            if (isValid && $el.is('input[type="file"]') && $el.is('[required]')) {
+                if (!el.files || el.files.length === 0) isValid = false;
+            }
+
+            $el.toggleClass('input-validation-error', !isValid);
+            return isValid;
+        }
+
+        // ========== NEW: Fill empty fields in dynamic rows with "N/A" ==========
+        function setEmptyDynamicFieldsToNA() {
+            // Dynamic row containers and also simple list containers for skills/certs
+            const containers = [
+                '#sib-container', '#edu-container', '#exp-container', 
+                '#skill-container', '#cert-container', '#rel-container', 
+                '#ach-container', '#doc-container'
+
+            ];
+            
+            containers.forEach(containerSelector => {
+                const container = $(containerSelector);
+                if (!container.length) return;
+                
+                // Handle both .repeater-card and flex rows (skills/certs)
+                container.find('.repeater-card, .flex.gap-2.items-center').each(function() {
+                    // Find all text inputs, textareas, number inputs (but skip file inputs and datepickers)
+                    $(this).find('input[type="text"], input[type="number"], textarea, input[type="tel"], input[type="email"]').each(function() {
+                        const $field = $(this);
+                        // Skip datepicker fields (to avoid breaking date parsing on server)
+                        if ($field.hasClass('datepicker')) return;
+                        // Skip hidden or disabled fields
+                        if ($field.prop('type') === 'hidden' || $field.prop('disabled')) return;
+                        
+                        let val = $field.val();
+                        if (val === undefined || val === null || val.trim() === '') {
+                            $field.val('N/A');
+                        }
+                    });
+                });
+            });
+            
+            // Additionally handle standalone skill/cert rows that might not be in repeater-card
+            $('#skill-container .flex, #cert-container .flex').each(function() {
+                $(this).find('input[type="text"]').each(function() {
+                    const $field = $(this);
+                    if ($field.hasClass('datepicker')) return;
+                    let val = $field.val();
+                    if (val === undefined || val === null || val.trim() === '') {
+                        $field.val('N/A');
+                    }
+                });
+            });
+        }
+
+        $(document).ready(function() {
+            // Auto‑format CNIC
+            $(document).on('input', '.cnic-mask', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                if (value.length > 13) value = value.substring(0, 13);
+                let formatted = '';
+                if (value.length > 5) {
+                    formatted += value.substring(0, 5) + '-';
+                    if (value.length > 12) formatted += value.substring(5, 12) + '-' + value.substring(12, 13);
+                    else formatted += value.substring(5);
+                } else {
+                    formatted = value;
+                }
+                $(this).val(formatted);
+            });
+
+            $(document).on('input', '.digits-only', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                if (value.length > 20) value = value.substring(0, 20);
+                $(this).val(value);
+            });
+
+            // Attach real‑time validation to all required‑like elements
+            $(document).on('blur change input', 'input[required], select[required], textarea[required], .required-check, .cnic-mask, .digits-only, .email-check, .edu-qualification-req, .edu-major-req, .edu-board-req, .edu-cgpa-req, .edu-from-req, .edu-to-req, .exp-org-req, .exp-designation-req, .exp-from-req, .sibling-name-req, .sibling-dob-req, .skill-name-req, .skill-proficiency-req, .cert-name-req, .cert-issuer-req, .rel-name-req, .ach-title-req, .ach-date-req', function() {
+                validateFieldRealTime(this);
+            });
+
+            // Specifically ensure that when cert-name changes, it triggers validation of the issuer
+            $(document).on('input change blur', '.cert-name-req', function() {
+                const row = $(this).closest('.repeater-card');
+                if (row.length) {
+                    const issuer = row.find('.cert-issuer-req');
+                    if (issuer.length) validateFieldRealTime(issuer[0]);
+                }
+            });
+
+            // Reindex existing collections on page load
+            const containers = ['sib', 'edu', 'exp', 'skill', 'cert', 'rel', 'ach', 'doc'];
+            const baseNames = ['Siblings', 'Educations', 'Experiences', 'Skills', 'Certifications', 'InternalRelatives', 'Achievements', 'DocumentAttachments'];
+            containers.forEach((prefix, i) => reindexContainer(`${prefix}-container`, baseNames[i]));
+
+            // Ensure at least one document attachment row exists
+            if ($('#doc-container').children().length === 0) {
+                addDynamicRow('doc-container', 'doc-template', 'DocumentAttachments');
+            }
+
+            if (typeof flatpickr !== 'undefined') {
+                flatpickr(".datepicker", {
+                    dateFormat: "Y-m-d",
+                    maxDate: "today",
+                    onChange: function(selectedDates, dateStr, instance) {
+                        validateFieldRealTime(instance.element);
+                    }
+                });
+            }
+
+            // FilePond configuration for main uploads
+            if (typeof FilePond !== 'undefined') {
+                FilePond.registerPlugin(FilePondPluginFileValidateSize, FilePondPluginFileValidateType);
+                pondPhoto = FilePond.create(document.querySelector('#PassportPhotoInput'), {
+                    storeAsFile: true,
+                    maxFileSize: '200KB',
+                    acceptedFileTypes: ['image/jpeg', 'image/png', 'image/webp'],
+                    labelIdle: 'Drag & Drop Photo or <span class="filepond--label-action">Browse</span>',
+                    onaddfile: (error, file) => {
+                        if (!error) $('#PassportPhotoInput').closest('.filepond--root').parent().removeClass('file-error-highlight');
+                    },
+                    onremovefile: () => {
+                        if (pondPhoto.getFiles().length === 0) $('#PassportPhotoInput').closest('.filepond--root').parent().addClass('file-error-highlight');
+                    }
+                });
+                pondCV = FilePond.create(document.querySelector('#CvFileInput'), {
+                    storeAsFile: true,
+                    maxFileSize: '500KB',
+                    acceptedFileTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+                    labelIdle: 'Drag & Drop CV or <span class="filepond--label-action">Browse</span>',
+                    onaddfile: (error, file) => {
+                        if (!error) $('#CvFileInput').closest('.filepond--root').parent().removeClass('file-error-highlight');
+                    },
+                    onremovefile: () => {
+                        if (pondCV.getFiles().length === 0) $('#CvFileInput').closest('.filepond--root').parent().addClass('file-error-highlight');
+                    }
+                });
+            }
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // ************** FORM SUBMIT HANDLER **************
+            $('#applicationForm').on('submit', function(e) {
+                e.preventDefault();
+                let isValid = true;
+                let errorMessages = new Set();
+                $('#formErrorBox').addClass('hidden');
+                $('#formErrorMsg').html('');
+
+                // 1. Remove completely empty dynamic rows (no data at all)
+                $('.repeater-card').each(function() {
+                    let hasData = false;
+                    $(this).find('input[type="text"], input[type="date"], input[type="number"], select:not([name$="Gender"]):not([name$="MaritalStatus"]), textarea').each(function() {
+                        if ($(this).val() && $(this).val().trim() !== '' && $(this).val() !== '0') hasData = true;
+                    });
+                    if ($(this).find('input[type="file"]').length > 0) {
+                        let fileInput = $(this).find('input[type="file"]')[0];
+                        if (fileInput.files && fileInput.files.length > 0) hasData = true;
+                    }
+                    if (!hasData) $(this).remove();
+                });
+
+                // Reindex after cleanup
+                containers.forEach((prefix, i) => reindexContainer(`${prefix}-container`, baseNames[i]));
+
+                // 2. Validate all fields (the real-time validation already marks errors, but we need to collect messages)
+                const allInputs = $(this).find('input[required], select[required], textarea[required], .required-check, .cnic-mask, .digits-only, .email-check, .edu-qualification-req, .edu-major-req, .edu-board-req, .edu-cgpa-req, .edu-from-req, .edu-to-req, .exp-org-req, .exp-designation-req, .exp-from-req, .sibling-name-req, .sibling-dob-req, .skill-name-req, .skill-proficiency-req, .cert-name-req, .cert-issuer-req, .rel-name-req, .ach-title-req, .ach-date-req');
+                allInputs.each(function() {
+                    if (!validateFieldRealTime(this)) {
+                        isValid = false;
+                        let label = $(this).closest('div, label').find('label').first().text() || $(this).attr('placeholder') || $(this).attr('name');
+                        if (label) errorMessages.add(`• ${label} is required or has an invalid format.`);
+                        else errorMessages.add(`• A required field is missing (${$(this).attr('name')})`);
+                    }
+                });
+
+                // 3. Explicit FilePond checks for main uploads
+                if (pondPhoto && pondPhoto.getFiles().length === 0) {
+                    $('#PassportPhotoInput').closest('.filepond--root').parent().addClass('file-error-highlight');
+                    isValid = false;
+                    errorMessages.add("• Passport Photo is required.");
+                }
+                if (pondCV && pondCV.getFiles().length === 0) {
+                    $('#CvFileInput').closest('.filepond--root').parent().addClass('file-error-highlight');
+                    isValid = false;
+                    errorMessages.add("• CV / Resume is required.");
+                }
+
+                if (!isValid) {
+                    let finalErrorHtml = '<ul class="list-disc ml-5">';
+                    if (errorMessages.size === 0) errorMessages.add("Please fill out all mandatory fields highlighted in red.");
+                    errorMessages.forEach(msg => finalErrorHtml += `<li>${msg}</li>`);
+                    finalErrorHtml += '</ul>';
+                    $('#formErrorMsg').html(finalErrorHtml);
+                    $('#formErrorBox').removeClass('hidden');
+
+                    let firstError = $('.input-validation-error, .file-error-highlight').first();
+                    if (firstError.length) {
+                        $('html, body').animate({ scrollTop: firstError.offset().top - 150 }, 500);
+                    }
+                    return false;
+                }
+
+                // ========== CRITICAL: Fill any empty dynamic row fields with "N/A" ==========
+                setEmptyDynamicFieldsToNA();
+
+                // If validation passes, show loading and submit natively
+                $('#btnFinalSubmit').html('Processing Application... <i class="fa fa-spinner fa-spin ml-2"></i>').addClass('opacity-75 pointer-events-none');
+                this.submit();
+            });
+        });
+    </script>
+}

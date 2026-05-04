@@ -1,0 +1,343 @@
+@model Career635.Areas.Admin.Models.ApplicationReviewViewModel
+@using Career635.Domain.Entities.Applicants
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Candidate : " + Model.Applicant.FullName;
+    var a = Model.Applicant;
+
+    // Helper for secure file streaming
+    string GetUrl(string? path) => string.IsNullOrEmpty(path) 
+        ? "" 
+        : Url.Action("GetFile", "Applications", new { area = "Admin", path = path }) ?? "";
+}
+@section Styles{
+<style>
+    /* ==========================================================================
+       LATEX CV & PRINT ENGINE
+       ========================================================================== */
+    
+    /* Apply strict serif styling only to the document to mimic LaTeX */
+    #latex-document {
+        font-family: "Latin Modern Roman", Cambria, Georgia, "Times New Roman", Times, serif;
+        color: #000;
+        line-height: 1.4;
+    }
+
+    /* LaTeX Section Headers */
+    .latex-section-header {
+        font-size: 14pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1.5px solid #000;
+        margin-top: 1.5em;
+        margin-bottom: 0.75em;
+        padding-bottom: 2px;
+    }
+
+    /* Data grids for personal info */
+    .latex-table { width: 100%; border-collapse: collapse; margin-bottom: 1em; font-size: 11pt; }
+    .latex-table td { padding: 3px 0; vertical-align: top; }
+    .latex-table td:nth-child(odd) { font-weight: bold; width: 20%; }
+    .latex-table td:nth-child(even) { width: 30%; }
+
+    /* Layout utilities */
+    .latex-entry { margin-bottom: 1.2em; page-break-inside: avoid; break-inside: avoid; }
+    .latex-flex-row { display: flex; justify-content: space-between; align-items: baseline; }
+    .latex-title { font-weight: bold; font-size: 12pt; }
+    .latex-subtitle { font-style: italic; font-size: 11pt; }
+    .latex-date { font-weight: normal; font-size: 11pt; white-space: nowrap; }
+    .latex-desc { font-size: 10.5pt; margin-top: 3px; text-align: justify; }
+
+    /* Print Specific Overrides */
+    @@media print {
+        @@page { size: A4 portrait; margin: 15mm; }
+        
+        body, html { background: white !important;color: #000; margin: 0 !important; padding: 0 !important; }
+        
+        /* Hide everything except the document container */
+        @* body > *:not(#main-wrapper) { display: none !important; } *@
+        .no-print { display: none !important; }
+
+        #main-wrapper { display: block !important; margin: 0 !important; padding: 0 !important; }
+        #latex-document { 
+            box-shadow: none !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            max-width: none !important; 
+            width: 100% !important;
+        }
+
+        /* Ensure links don't print URLs unless we want them to */
+        a[href]:after { content: none !important; }
+        
+        /* High fidelity color force */
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
+</style>
+}
+<div id="main-wrapper" class="flex flex-col xl:flex-row gap-8 min-h-screen -mt-6 font-sans">
+    
+    <!-- LEFT: THE LATEX DOSSIER -->
+    <div class="flex-1 pb-32">
+        
+        <!-- UI TOOLBAR: HIDDEN ON PRINT -->
+        <div class="no-print flex justify-between items-center bg-white p-4 mb-6 rounded-xl border border-slate-200 shadow-sm">
+            <a href="/Admin/Applications" class="flex items-center gap-2 text-sm font-semibold text-slate-600  transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Registry
+            </a>
+            <div class="flex items-center gap-4">
+                <span class="px-3 py-1 bg-slate-100 text-slate-800 rounded border border-slate-300 text-xs font-bold uppercase tracking-widest">
+                    Status: @Model.Status
+                </span>
+                <button onclick="window.print()" class="flex items-center gap-2 px-5 py-2  rounded text-sm font-bold shadow   transition-colors">
+                    <i data-lucide="printer" class="w-4 h-4"></i> Print Candidate 
+                </button>
+            </div>
+        </div>
+
+        <!-- LATEX DOCUMENT A4 PAPER CONTAINER -->
+        <div id="latex-document" class="bg-white mx-auto shadow-2xl p-12 sm:p-16 w-full max-w-[210mm] min-h-[297mm]">
+            
+            <!-- HEADER: Name & Contact -->
+            <div class="flex justify-between items-start mb-8">
+                <div class="flex-1">
+                    <h1 class="text-3xl font-bold uppercase tracking-wider mb-2">@a.FullName</h1>
+                    
+                    <div class="text-[11pt] space-y-1">
+                        <div><strong>Application Post:</strong> @Model.JobTitle</div>
+                        <div><strong>Registration ID:</strong> @a.TrackingCode</div>
+                        <div>
+                            @a.PersonalInfo?.ContactNo 
+                            @if(!string.IsNullOrEmpty(a.PersonalInfo?.Email)) { 
+                                <span>| @a.PersonalInfo.Email</span> 
+                            }
+                        </div>
+                        <div>@a.PersonalInfo?.PermanentAddress</div>
+                    </div>
+                </div>
+                
+                <!-- Passport Photo: Strict 1px black border -->
+                <div class="w-[35mm] h-[45mm] border border-black shrink-0 ml-6 p-[2px]">
+                    <img src="@GetUrl(a.PassportImageUrl)" class="w-full h-full object-cover grayscale print:grayscale-0" alt="Passport" />
+                </div>
+            </div>
+
+            <!-- 1. BIOGRAPHICAL DATA -->
+            <div class="latex-section-header">Biographical Data</div>
+            <table class="latex-table avoid-break">
+                <tr>
+                    <td>Father's Name</td>
+                    <td>@a.PersonalInfo?.FatherName</td>
+                    <td>Date of Birth</td>
+                    <td>@a.PersonalInfo?.DateOfBirth.ToString("dd MMMM yyyy")</td>
+                </tr>
+                <tr>
+                    <td>Father's CNIC</td>
+                    <td>@(a.PersonalInfo?.FatherCNIC ?? "Not Provided")</td>
+                    <td>CNIC Number</td>
+                    <td>@a.CNICNumber</td>
+                </tr>
+                <tr>
+                    <td>Gender</td>
+                    <td>@a.PersonalInfo?.Gender</td>
+                    <td>Marital Status</td>
+                    <td>@a.PersonalInfo?.MaritalStatus</td>
+                </tr>
+                <tr>
+                    <td>Religion</td>
+                    <td>@a.PersonalInfo?.Religion @(!string.IsNullOrEmpty(a.PersonalInfo?.Sect) ? $" ({a.PersonalInfo.Sect})" : "")</td>
+                    <td>PEC Registration</td>
+                    <td>@(string.IsNullOrEmpty(a.PersonalInfo?.PECNumber) ? "N/A" : a.PersonalInfo.PECNumber)</td>
+                </tr>
+            </table>
+
+            <!-- 2. ACADEMIC ATTAINMENTS -->
+            <div class="latex-section-header">Academic Attainments</div>
+            @if(a.Educations.Any()) {
+                foreach (var edu in a.Educations.OrderByDescending(x => x.ToDate)) {
+                    <div class="latex-entry">
+                        <div class="latex-flex-row">
+                            <div>
+                                <span class="latex-title">@edu.Qualification</span>, 
+                                <span class="latex-subtitle">@edu.BoardUniversity</span>
+                            </div>
+                            <div class="latex-date">@edu.ToDate.Year</div>
+                        </div>
+                        <div class="latex-desc">
+                            Cumulative GPA / Percentage: <strong>@edu.CgpaPercentage</strong>
+                        </div>
+                    </div>
+                }
+            } else {
+                <div class="latex-desc italic text-gray-600">No academic records provided.</div>
+            }
+
+            <!-- 3. PROFESSIONAL EXPERIENCE -->
+            <div class="latex-section-header">Professional Experience</div>
+            @if(a.Experiences.Any()) {
+                foreach (var exp in a.Experiences.OrderByDescending(x => x.FromDate)) {
+                    <div class="latex-entry">
+                        <div class="latex-flex-row">
+                            <div>
+                                <span class="latex-title">@exp.Designation</span>, 
+                                <span class="latex-subtitle">@exp.OrganizationName</span>
+                            </div>
+                            <div class="latex-date">
+                                @exp.FromDate.ToString("MM/yyyy") — @(exp.ToDate?.ToString("MM/yyyy") ?? "Present")
+                            </div>
+                        </div>
+                        <div class="latex-desc">
+                            @exp.KeyResponsibilities
+                        </div>
+                    </div>
+                }
+            } else {
+                <div class="latex-desc italic text-gray-600">No professional experience recorded.</div>
+            }
+
+            <!-- 4. FAMILY CONTEXT & MILITARY -->
+            <div class="latex-section-header">Family Context & Military Service</div>
+            <div class="latex-entry">
+                <div class="latex-title mb-2">Family Summary</div>
+                <div class="latex-desc mb-4">
+                    Brothers: <strong>@a.FamilySummary?.BrothersTotal</strong> | 
+                    Sisters: <strong>@a.FamilySummary?.SistersTotal</strong> | 
+                    Children: <strong>@a.FamilySummary?.ChildrenTotal</strong>
+                </div>
+
+                @if(a.Siblings.Any()) {
+                    <table class="latex-table mb-4" style="width: 80%;">
+                        @foreach(var s in a.Siblings) {
+                            <tr>
+                                <td>Sibling Name</td>
+                                <td style="width: 40%;">@s.Name</td>
+                                <td>Occupation</td>
+                                <td>@s.Occupation</td>
+                            </tr>
+                        }
+                    </table>
+                }
+                
+@if(a.InternalRelatives.Any()){
+      <table class="latex-table mb-4" style="width: 80%;">
+                        @foreach(var s in a.InternalRelatives) {
+                            <tr>
+                                <td>Relatives in Organization</td>
+                                <td style="width: 40%;">@s.RelativeName</td>
+                                <td>Occupation</td>
+                                <td>@s.Designation</td>
+                                   <td>Occupation</td>
+                                <td>@s.Department</td>
+                            </tr>
+                        }
+                    </table>
+
+}
+                <div class="latex-title mb-2 mt-4">Military Service Record</div>
+                @if(!string.IsNullOrEmpty(a.MilitaryDetail?.ArmyNumber)) {
+                    <table class="latex-table">
+                        <tr>
+                            <td>Service Number</td>
+                            <td>@a.MilitaryDetail.ArmyNumber</td>
+                            <td>Corps / Unit</td>
+                            <td>@a.MilitaryDetail.ArmyUnit</td>
+                        </tr>
+                        <tr>
+                            <td>Character</td>
+                            <td colspan="3">@a.MilitaryDetail.ArmyCharacter</td>
+                        </tr>
+                    </table>
+                } else {
+                    <div class="latex-desc">No prior military service recorded.</div>
+                }
+            </div>
+
+            <!-- 5. FINANCIAL DETAIL -->
+            <div class="latex-section-header">Financial Expectations & Remarks</div>
+            <div class="latex-entry">
+                <table class="latex-table">
+                    <tr>
+                        <td>Current Salary</td>
+                        <td>PKR @(a.FinancialDetail?.CurrentSalary?.ToString("N0") ?? "0")</td>
+                        <td>Expected Salary</td>
+                        <td>PKR @(a.FinancialDetail?.ExpectedSalary?.ToString("N0") ?? "0")</td>
+                    </tr>
+                    <tr>
+                        <td>Additional Remarks</td>
+                        <td colspan="3">@(string.IsNullOrEmpty(a.FinancialDetail?.FamilyIncomeDetail) ? "None provided." : a.FinancialDetail.FamilyIncomeDetail)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- FOOTER STAMP -->
+            <div class="mt-12 border-t border-black pt-2 text-[9pt] text-center no-print text-gray-500">
+                Official Selection Board   &nbsp;|&nbsp; Generated: @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'")
+            </div>
+            
+            <div class="hidden print:block mt-12 border-t border-black pt-2 text-[9pt] text-center text-black">
+                Official Selection Board   &nbsp;|&nbsp; Generated: @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'")
+            </div>
+
+        </div>
+    </div>
+
+    <!-- RIGHT: INTERACTIVE SIDEBAR (HIDDEN ON PRINT) -->
+    <aside class="w-full xl:w-[450px] shrink-0 no-print">
+        <div class="sticky top-24 space-y-6">
+            
+            <!-- 1. DECISION HUB -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <i data-lucide="gavel" class="w-4 h-4"></i> Merit Decision
+                </h3>
+                <form asp-action="UpdateStatus" method="post" class="space-y-4">
+                    <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
+                    
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 block mb-2">Application Status</label>
+                        <select name="status" class="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-black focus:ring-1 focus:ring-black">
+                            <option value="Pending" selected="@(Model.Status == "Pending")">Pending Initial Audit</option>
+                            <option value="Shortlisted" selected="@(Model.Status == "Shortlisted")">Shortlist for Interview</option>
+                            <option value="Rejected" selected="@(Model.Status == "Rejected")">Reject Application</option>
+                            <option value="Offered" selected="@(Model.Status == "Offered")">Proceed to Offer</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-semibold text-slate-600 block mb-2">Recruiter Remarks</label>
+                        <textarea name="remarks" rows="4" placeholder="Enter notes..." class="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black resize-none text-slate-800">@Model.RecruiterRemarks</textarea>
+                    </div>
+                    
+                    <button type="submit" class="w-full py-3 rounded text-sm font-bold uppercase tracking-widest  transition-colors shadow">
+                        Save Decision
+                    </button>
+                </form>
+            </div>
+
+            <!-- 2. LIVE CV VIEWER -->
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-[600px] flex flex-col">
+                <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="paperclip" class="w-4 h-4 text-slate-600"></i>
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-widest">Original Uploaded CV</span>
+                    </div>
+                    <a href="@GetUrl(a.CvUrl)" target="_blank" download class="text-slate-500 hover:text-black transition-colors" title="Download PDF">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                    </a>
+                </div>
+                <div class="flex-1 bg-slate-200">
+                    @if (!string.IsNullOrEmpty(a.CvUrl)) {
+                        <iframe src="@GetUrl(a.CvUrl)#view=FitH&toolbar=0" class="w-full h-full border-none bg-white" type="application/pdf"></iframe>
+                    } else {
+                        <div class="h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50">
+                            <i data-lucide="file-x" class="w-10 h-10 mb-2 opacity-50"></i>
+                            <p class="text-xs font-bold uppercase tracking-widest">PDF Unavailable</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </aside>
+</div>

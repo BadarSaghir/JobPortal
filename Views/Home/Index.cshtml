@@ -1,0 +1,262 @@
+﻿@model Career635.Features.Jobs.Models.HomeViewModel
+@{
+    ViewData["Title"] = "Professional Career Gateway";
+}
+
+<!-- 
+    DESIGN ARCHITECTURE (Tailwind v4)
+    - Hero: Uses svh (Small Viewport Height) for mobile browser perfection.
+    - Search: Balanced "Pill" design with proportional button sizing.
+    - Grid: Mobile-first ordering (Jobs first, then Sidebar).
+    - Typography: text-balance for modern heading wraps.
+-->
+
+<!-- SECTION 1: IMPACT HERO -->
+<section class="relative min-h-[80svh] md:min-h-[85vh] flex items-center bg-secondary text-white overflow-hidden rounded-b-[2.5rem] md:rounded-b-[5rem] shadow-2xl">
+    <!-- Modern Radial Glow -->
+    <div class="absolute top-0 right-0 w-full md:w-2/3 h-full bg-[radial-gradient(circle_at_50%_50%,_var(--color-primary)_0%,_transparent_60%)] opacity-15 pointer-events-none"></div>
+    
+    <div class="container mx-auto px-4 sm:px-6 lg:px-12 py-12 md:py-0 relative z-10">
+        <div class="max-w-4xl">
+            <!-- Security Badge -->
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-3 duration-700">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Secure Personnel Portal
+            </div>
+            
+            <h1 class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95] mb-6 md:mb-8 text-wrap balance">
+                Merit-Based <br/>
+                <span class="text-primary">Opportunities.</span>
+            </h1>
+            
+            <p class="text-slate-400 text-base md:text-xl font-light leading-relaxed mb-10 md:mb-14 max-w-xl text-pretty">
+                Access specialized career paths. We prioritize professional excellence through a transparent, merit-based digital selection process.
+            </p>
+
+            <!-- REFINED SEARCH & STATS GROUP -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+                <!-- Search Bar: Proportional "Pill" Design -->
+                <form asp-controller="Jobs" asp-action="Search" method="get" 
+                      class="flex-1 bg-white p-1.5 rounded-full shadow-2xl flex items-center gap-2 max-w-xl">
+                    <div class="flex-1 flex items-center px-4 gap-3">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                        <input name="searchTerm" type="text" placeholder="Search job titles..." 
+                               class="w-full bg-transparent py-2.5 md:py-3 outline-none text-secondary font-bold placeholder:font-normal placeholder:text-slate-400 text-sm md:text-base" />
+                    </div>
+                    <!-- Refined Button: Not too big, balanced padding -->
+                    <button type="submit" class="bg-primary text-white px-6 py-2.5 md:py-3 rounded-full font-black text-[11px] uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0">
+                        Search
+                    </button>
+                </form>
+
+                <!-- Live Counter -->
+                <div class="flex items-center gap-4 px-6 py-3 bg-white/5 border border-white/10 rounded-full backdrop-blur-md">
+                    <div class="text-center">
+                        <span class="block text-xl md:text-2xl font-black text-primary leading-none">@Model.TotalActiveJobs</span>
+                        <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter whitespace-nowrap">Live Roles</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 2: VACANCIES & SIDEBAR -->
+<section class="container mx-auto px-4 sm:px-6 lg:px-12 py-16 md:py-32">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        
+        <!-- MAIN COLUMN: JOB LISTING -->
+        <div class="lg:col-span-8 space-y-12">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-100 pb-8">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-black text-secondary tracking-tight">Open Vacancies</h2>
+                    <div class="h-1.5 w-12 bg-primary mt-3 rounded-full"></div>
+                </div>
+                <a asp-controller="Jobs" asp-action="Search" class="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary hover:text-secondary transition-all">
+                    Explore All <i data-lucide="arrow-right" class="w-4 h-4 transition-transform group-hover:translate-x-2"></i>
+                </a>
+            </div>
+
+            <!-- Job Card Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                @foreach (var job in Model.RecentJobs) {
+                    <partial name="_JobCard" model="job" />
+                }
+            </div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <aside class="lg:col-span-4 space-y-8">
+            <!-- Application Guide -->
+            <div class="bg-white rounded-[2.5rem] border border-slate-100 p-8 md:p-10 shadow-sm relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+                
+                <h3 class="text-xs font-black text-secondary uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4 text-primary"></i> Application Guide
+                </h3>
+                
+                <div class="space-y-8">
+                    <div class="flex gap-4">
+                        <span class="text-[10px] font-black text-primary bg-primary/10 w-7 h-7 flex items-center justify-center rounded-lg shrink-0">01</span>
+                        <div>
+                            <h4 class="text-sm font-bold text-secondary mb-1">Bio-Data Form</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed font-medium">Complete the comprehensive 8-page digital bio-data verification.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <span class="text-[10px] font-black text-primary bg-primary/10 w-7 h-7 flex items-center justify-center rounded-lg shrink-0">02</span>
+                        <div>
+                            <h4 class="text-sm font-bold text-secondary mb-1">Media Uploads</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed font-medium">Upload a professional PDF CV and high-res passport photograph.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <a asp-controller="Jobs" asp-action="Search" class="block w-full mt-10 bg-secondary text-white text-center py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all shadow-md">
+                    Find Job to Apply
+                </a>
+            </div>
+
+            <!-- Closing Soon (Sticky) -->
+            @if (Model.ExpiringJobs.Any())
+            {
+                <div class="bg-slate-900 rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl lg:sticky lg:top-8">
+                    <div class="flex items-center justify-between mb-10">
+                        <h3 class="font-bold text-[10px] uppercase tracking-widest text-red-400">Closing Soon</h3>
+                        <span class="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
+                    </div>
+                    
+                    <div class="space-y-8">
+                      @foreach (var job in Model.ExpiringJobs) {
+                        <a asp-controller="Jobs" asp-action="Details" asp-route-id="@job.Id" class="block group border-b border-white/5 pb-6 last:border-0 last:pb-0">
+                            <h4 class="font-bold text-white group-hover:text-primary transition-colors text-sm mb-2">@job.Title</h4>
+                            <span class="utc-timer text-[10px] text-red-500 font-black flex items-center gap-2 uppercase" 
+                                data-utc="@job.ExpiresAt.ToString("yyyy-MM-ddTHH:mm:ssZ")">
+                                <i data-lucide="clock" class="w-3 h-3"></i> Syncing...
+                            </span>
+                        </a>
+                      }
+                    </div>
+                </div>
+            }
+        </aside>
+    </div>
+</section>
+
+<!-- SECTION 3: TOOLS & SUPPORT -->
+<section class="bg-slate-50 border-t border-slate-200">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-12 py-20 md:py-32">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
+            
+            <!-- Application Tracking -->
+            <div class="space-y-8 md:space-y-10">
+                <h2 class="text-4xl md:text-5xl font-black text-secondary tracking-tighter leading-tight">Track Your <br/>Application.</h2>
+                <p class="text-slate-500 font-light leading-relaxed max-w-sm text-base">Enter the unique Identity Code provided during your final submission to view live status.</p>
+                
+                <form asp-controller="Jobs" asp-action="Track" method="get" class="flex flex-col sm:flex-row gap-3 max-w-md">
+                    <input name="code" type="text" placeholder="Identity Code (e.g. C635-XYZ)" 
+                           class="flex-1 bg-white border border-slate-200 rounded-2xl px-6 py-4 text-sm outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono" />
+                    <button type="submit" class="bg-secondary text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary transition-all">
+                        Verify
+                    </button>
+                </form>
+            </div>
+
+            <!-- Support Ticket -->
+            <div class="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl border border-slate-100">
+                <div class="mb-10">
+                    <h3 class="text-2xl font-black text-secondary mb-1">Help Desk</h3>
+                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Submit Support Ticket</p>
+                </div>
+                
+                <form id="supportForm" class="space-y-4">
+                    @Html.AntiForgeryToken()
+                    <input type="email" id="supportEmail" placeholder="Official Email Address" required 
+                           class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 text-sm outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
+                    
+                    <textarea id="supportMessage" rows="3" placeholder="Briefly describe your technical issue..." required 
+                              class="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 text-sm outline-none resize-none focus:ring-4 focus:ring-primary/10 transition-all"></textarea>
+                    
+                    <button type="submit" id="supportBtn" class="w-full bg-primary text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:shadow-lg transition-all flex items-center justify-center gap-3">
+                        <span>Submit Ticket</span>
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </form>
+
+                <div id="supportResponse" class="mt-6 hidden text-[11px] font-black uppercase tracking-widest text-center p-4 rounded-2xl transition-all"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // 1. UTC Countdown Logic
+        const updateTimers = () => {
+            document.querySelectorAll('.utc-timer').forEach(el => {
+                const utcStr = el.getAttribute('data-utc');
+                if (!utcStr) return;
+                const expiry = new Date(utcStr);
+                const now = new Date();
+                const diff = expiry - now;
+                
+                if (diff <= 0) {
+                    el.textContent = "Closed";
+                    return;
+                }
+
+                const hours = Math.floor(diff / 3600000);
+                const mins = Math.floor((diff % 3600000) / 60000);
+                
+                if (hours >= 24) {
+                    el.innerHTML = `<i data-lucide="clock" class="w-3 h-3"></i> ${Math.floor(hours/24)} Days Remaining`;
+                } else {
+                    el.innerHTML = `<i data-lucide="clock" class="w-3 h-3"></i> ${hours}h ${mins}m Left`;
+                }
+            });
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+        updateTimers();
+        setInterval(updateTimers, 60000);
+
+        // 2. AJAX Support Form
+        const supportForm = document.getElementById('supportForm');
+        if (supportForm) {
+            supportForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('supportBtn');
+                const resp = document.getElementById('supportResponse');
+                
+                btn.disabled = true;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>';
+                lucide.createIcons();
+
+                const formData = new FormData();
+                formData.append('email', document.getElementById('supportEmail').value);
+                formData.append('message', document.getElementById('supportMessage').value);
+                formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+                try {
+                    const response = await fetch('/SubmitSupport', { method: 'POST', body: formData });
+                    const result = await response.json();
+                    
+                    resp.className = `mt-6 block text-[11px] font-black uppercase tracking-widest text-center p-4 rounded-2xl ${result.success ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`;
+                    resp.innerText = result.message;
+                    if(result.success) supportForm.reset();
+                } catch (err) {
+                    resp.className = "mt-6 block text-[11px] font-black uppercase text-center p-4 rounded-2xl bg-red-50 text-red-600";
+                    resp.innerText = "Connection lost. Retry.";
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    lucide.createIcons();
+                    resp.classList.remove('hidden');
+                }
+            });
+        }
+    });
+</script>
+}

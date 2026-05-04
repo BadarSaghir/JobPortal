@@ -1,0 +1,319 @@
+@using Career635.Domain.Constants
+@{
+    // Capture the current controller to determine active route
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    
+    // Define the tailwind classes directly in Razor to avoid @apply compilation issues
+    var activeClass = "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 translate-x-1";
+    var inactiveClass = "text-slate-400 hover:text-white hover:bg-white/5";
+}
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="utf-8" />
+    @* <meta name="viewport" content="width=device-width, initial-scale=1.0" /> *@
+    <title>@ViewData["Title"] | Career 635 Management</title>
+    
+    <!-- Local Assets - Ensure these files exist in wwwroot/dist and wwwroot/lib -->
+    <link rel="stylesheet" href="~/dist/style.css" asp-append-version="true" />
+
+ 
+    @RenderSection("Styles", required: false)
+    <link rel="stylesheet" href="~/lib/easymde/easymde.min.css" />
+    <link rel="stylesheet" href="~/lib/tom-select/tom-select.min.css" />
+    <style>
+        /* 1. PROFESSIONAL PRINT ENGINE */
+        @@media print {
+            .no-print { display: none !important; }
+            #main-container, main { display: block !important; padding: 0 !important; margin: 0 !important; width: 100% !important; }
+            .bg-white { border: none !important; box-shadow: none !important; }
+            @@page { size: A4; margin: 1.5cm; }
+        }
+
+        /* 2. CUSTOM SCROLLBARS */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full font-sans antialiased text-slate-800 flex overflow-hidden">
+
+    <!-- SIDEBAR: MATTE SLATE DESIGN (no-print) -->
+    <aside id="admin-sidebar" class="no-print w-72 bg-[#0F172A] text-slate-300 flex-shrink-0 flex flex-col transition-all duration-300 border-r border-white/5">
+        
+        <!-- Brand identity -->
+        <div class="h-20 flex items-center px-8 bg-slate-950/30">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xl font-black text-white tracking-tighter uppercase leading-none">Console<span class="text-emerald-500">635</span></span>
+                    <span class="text-[9px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-1">Management Node</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto py-8 px-4 space-y-10">
+            
+            <!-- Operations Group -->
+            <div>
+                <p class="px-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">Operations</p>
+                <div class="space-y-1">
+                    <a href="/Admin/Dashboard" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all @(currentController == "Dashboard" ? activeClass : inactiveClass)">
+                        <i data-lucide="layout-grid" class="w-4.5 h-4.5"></i> Dashboard
+                    </a>
+
+                    @if (User.HasClaim("Permission", AppPermissions.ApplicantsView))
+                    {
+                        <a href="/Admin/Applications" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all @(currentController == "Applications" ? activeClass : inactiveClass)">
+                            <i data-lucide="folder-search" class="w-4.5 h-4.5"></i> Candidates 
+                        </a>
+                    }
+
+                    @if (User.HasClaim("Permission", AppPermissions.JobsView))
+                    {
+                        <a href="/Admin/JobsAdmin" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all @(currentController == "JobsAdmin" ? activeClass : inactiveClass)">
+                            <i data-lucide="briefcase" class="w-4.5 h-4.5"></i> Requisitions
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <!-- Management Group -->
+            <div>
+                <p class="px-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">Strategic Assets</p>
+                <div class="space-y-1">
+                    @if (User.HasClaim("Permission", AppPermissions.CampaignsManage))
+                    {
+                        <a href="/Admin/Campaigns" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all @(currentController == "Campaigns" ? activeClass : inactiveClass)">
+                            <i data-lucide="layers" class="w-4.5 h-4.5"></i> Active Batches
+                        </a>
+                    }
+
+                    @if (User.HasClaim("Permission", AppPermissions.JobsManage))
+                    {
+                        <a href="/Admin/Reports" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all @(currentController == "Reports" ? activeClass : inactiveClass)">
+                            <i data-lucide="pie-chart" class="w-4.5 h-4.5"></i> Merit Analytics
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <!-- Security Group -->
+            @if (User.HasClaim("Permission", AppPermissions.StaffManage) || User.HasClaim("Permission", AppPermissions.RolesManage))
+            {
+                <div>
+                    <p class="px-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">System Identity</p>
+                    <div class="space-y-1">
+                        @if (User.HasClaim("Permission", AppPermissions.StaffManage))
+                        {
+                            <a href="/Admin/Staff" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all @(currentController == "Staff" ? activeClass : inactiveClass)">
+                                <i data-lucide="users" class="w-4.5 h-4.5"></i> Internal Personnel
+                            </a>
+                        }
+                        @if (User.HasClaim("Permission", AppPermissions.RolesManage))
+                        {
+                            <a href="/Admin/Roles" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all @(currentController == "Roles" ? activeClass : inactiveClass)">
+                                <i data-lucide="key" class="w-4.5 h-4.5"></i> Privilege Groups
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="p-6 border-t border-white/5 mt-auto">
+            <div class="bg-white/5 rounded-2xl p-4 flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Node Secured</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div id="main-container" class="flex-1 flex flex-col min-w-0 bg-[#F8FAFC]">
+        
+        <!-- HEADER (no-print) -->
+        <header class="no-print h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 lg:px-12 z-40 shrink-0">
+            
+            <div class="flex-1 max-w-xl">
+                <!-- Search Placeholder -->
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-6 ml-auto">
+                
+                <!-- NOTIFICATIONS BELL -->
+                <div class="relative">
+                    <button onclick="toggleDropdown('notification-menu')" class="relative p-2.5 text-slate-400 hover:text-emerald-600 transition-all rounded-xl hover:bg-emerald-50 group">
+                        <i data-lucide="bell" class="w-5 h-5 transition-transform group-hover:rotate-12"></i>
+                        <span id="notif-badge" class="absolute top-2 right-2 w-4 h-4 bg-red-500 text-[9px] font-black text-white rounded-full border-2 border-white flex items-center justify-center hidden">0</span>
+                    </button>
+
+                    <div id="notification-menu" class="hidden absolute right-0 mt-4 w-80 bg-white rounded-[2rem] border border-slate-200 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in duration-200">
+                        <div class="px-6 py-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                            <span class="text-[10px] font-black text-slate-900 uppercase tracking-widest">System Alerts</span>
+                           <!-- Updated to a form/button -->
+    <form asp-area="Admin" asp-controller="AccountAdmin" asp-action="MarkAllAsRead" method="post">
+        <button type="submit" class="text-[9px] font-bold text-emerald-600 uppercase hover:underline">
+            Mark All Read
+        </button>
+    </form>
+                        </div>
+                        <div id="notif-list" class="max-h-96 overflow-y-auto divide-y divide-slate-50">
+                            <div class="p-10 text-center text-slate-300">
+                                <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2"></i>
+                                <p class="text-[10px] font-black uppercase tracking-widest">Syncing Hub...</p>
+                            </div>
+                        </div>
+                        <a href="/Admin/AccountAdmin/Notifications" class="block w-full py-4 text-center bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-emerald-600">View Historical Log</a>
+                    </div>
+                </div>
+
+                <div class="h-8 w-px bg-slate-200 mx-2"></div>
+
+                <!-- USER MENU -->
+                <div class="relative">
+                    <button onclick="toggleDropdown('user-menu')" class="flex items-center gap-4 focus:outline-none group">
+                        <div class="hidden md:block text-right leading-tight">
+                            <p class="text-[11px] font-black text-slate-900 uppercase tracking-tighter">@User.Identity?.Name</p>
+                            <p class="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mt-1">Authorized Staff</p>
+                        </div>
+                        <div class="w-11 h-11 rounded-2xl bg-[#0F172A] border-2 border-slate-100 flex items-center justify-center text-emerald-500 font-black text-sm shadow-xl group-hover:scale-105 transition-all">
+                            @(User.Identity?.Name?[..1].ToUpper() ?? "A")
+                        </div>
+                    </button>
+
+                    <div id="user-menu" class="hidden absolute right-0 mt-4 w-64 bg-white rounded-[2rem] border border-slate-200 shadow-2xl p-2 z-50 animate-in fade-in zoom-in duration-200">
+                        <a asp-area="Admin" asp-controller="AccountAdmin" asp-action="Profile" class="flex items-center gap-3 p-4 rounded-2xl text-[11px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-all">
+                            <i data-lucide="user-circle" class="w-4.5 h-4.5"></i> My Identity
+                        </a>
+                        <a asp-area="Admin" asp-controller="AccountAdmin" asp-action="Settings" class="flex items-center gap-3 p-4 rounded-2xl text-[11px] font-black uppercase text-slate-600 hover:bg-slate-50 transition-all border-b border-slate-50 mb-1">
+                            <i data-lucide="settings-2" class="w-4.5 h-4.5"></i> Terminal Settings
+                        </a>
+                        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                            <button type="submit" class="w-full flex items-center gap-3 p-4 rounded-2xl text-[11px] font-black uppercase text-red-500 hover:bg-red-50 transition-all text-left">
+                                <i data-lucide="power" class="w-4.5 h-4.5"></i> End Session
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN VIEWPORT -->
+        <main class="flex-1 overflow-y-auto p-6 lg:p-12 custom-scrollbar">
+            <div class="max-w-[1600px] mx-auto">
+                <!-- BREADCRUMB (no-print) -->
+                <nav class="no-print flex items-center gap-3 mb-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] breadcrumb-nav">
+                    <a href="/Admin/Dashboard" class="hover:text-emerald-600 transition-colors">Root Node</a>
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-30"></i>
+                    <span class="text-slate-900 font-black">@ViewData["Title"]</span>
+                </nav>
+
+                <!-- PAGE CONTENT -->
+                <div class="animate-in fade-in slide-in-from-bottom-2 duration-700">
+                    @RenderBody()
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- CORE LIBRARIES -->
+    <script src="~/lib/lucide.min.js"></script>
+    <script src="~/lib/easymde/easymde.min.js"></script>
+    <script src="~/lib/tom-select/tom-select.complete.min.js"></script>
+
+    @RenderSection("Scripts", required: false)
+
+    <!-- GLOBAL UI SCRIPT -->
+    <script>
+        // 1. Initialize Icons
+        lucide.createIcons();
+
+        // 2. Generic Dropdown Handler (Fixed ReferenceError)
+        function toggleDropdown(id) {
+            const menu = document.getElementById(id);
+            if (!menu) return;
+
+            // Close other open menus
+            const menus = ['user-menu', 'notification-menu'];
+            menus.forEach(mId => {
+                if (mId !== id) {
+                    const other = document.getElementById(mId);
+                    if (other) other.classList.add('hidden');
+                }
+            });
+
+            menu.classList.toggle('hidden');
+        }
+
+        // Close on outside click
+        document.addEventListener('click', function(event) {
+            const menus = ['user-menu', 'notification-menu'];
+            menus.forEach(id => {
+                const el = document.getElementById(id);
+                const btn = event.target.closest(`[onclick="toggleDropdown('${id}')"]`);
+                if (el && !el.classList.contains('hidden') && !el.contains(event.target) && !btn) {
+                    el.classList.add('hidden');
+                }
+            });
+        });
+
+        // 3. Notification Hub Engine
+    // 3. Notification Hub Engine
+async function loadNotifications() {
+    try {
+        const response = await fetch('/Admin/AccountAdmin/GetRecentNotifications');
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        const container = document.getElementById('notif-list');
+        const badge = document.getElementById('notif-badge');
+
+        // Update the red badge count
+        if (data.unreadCount > 0) {
+            badge.innerText = data.unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+
+        // Handle empty state
+        if (!data.recentNotifications || data.recentNotifications.length === 0) {
+            container.innerHTML = `<div class="p-12 text-center text-slate-300 text-xs font-bold uppercase italic">Zero pending alerts</div>`;
+            return;
+        }
+
+        // Build the HTML
+        container.innerHTML = data.recentNotifications.map(n => `
+            <!-- LINK TO THE DETAIL PAGE INSTEAD OF DIRECT ACTION URL -->
+            <a href="/Admin/AccountAdmin/Notifications/${n.id}" class="block p-6 hover:bg-slate-50 transition-all group ${n.isRead ? 'opacity-50' : ''}">
+                <div class="flex gap-5">
+                    <!-- Dot is emerald for unread, transparent/slate for read -->
+                    <div class="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${n.isRead ? 'bg-slate-200' : (n.type === 'Urgent' ? 'bg-red-500' : 'bg-emerald-500')}"></div>
+                    <div class="space-y-1">
+                        <p class="text-[11px] font-black text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors uppercase tracking-tight">
+                            ${n.title}
+                        </p>
+                        <p class="text-[10px] text-slate-500 leading-relaxed line-clamp-2">${n.message}</p>
+                        <p class="text-[9px] text-slate-300 font-bold uppercase mt-3 tracking-widest">${n.timeAgo}</p>
+                    </div>
+                </div>
+            </a>
+        `).join('');
+        
+        lucide.createIcons();
+    } catch (e) {
+        console.warn("Hub connection standby.");
+    }
+}
+        document.addEventListener("DOMContentLoaded", loadNotifications);
+    </script>
+</body>
+</html>

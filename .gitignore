@@ -1,0 +1,12 @@
+/bin
+/dist
+/temp_exports
+/uploads
+
+/bin/*
+/dist/*
+/temp_exports/*
+/uploads/*
+/obj
+/Infrastructure/Persistence/Migrations
+/tailwind.exe

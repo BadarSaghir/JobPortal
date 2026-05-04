@@ -1,0 +1,103 @@
+@model Career635.Features.Jobs.Models.SearchPageViewModel
+@{
+    ViewData["Title"] = "Explore Opportunities";
+}
+
+<section class="bg-[#F8FAFC] min-h-screen pb-24">
+    <!-- SEARCH HEADER -->
+    <div class="bg-white border-b border-slate-200 pt-16 pb-12 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+            <i data-lucide="search" class="w-64 h-64"></i>
+        </div>
+        
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="max-w-4xl">
+                <h1 class="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter mb-4 uppercase">Registry Search</h1>
+                <p class="text-slate-500 font-light text-lg leading-relaxed">
+                    Showing <span class="text-emerald-600 font-black">@Model.TotalCount</span> available positions 
+                    @if(!string.IsNullOrEmpty(Model.SearchTerm)){ <span>matching "<span class="text-slate-900 font-bold">@Model.SearchTerm</span>"</span> }
+                </p>
+                
+                <form method="get" asp-action="Search" class="mt-10 flex flex-col md:flex-row gap-3">
+                    <div class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl flex items-center px-6 gap-4 focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all border-slate-100 shadow-inner">
+                        <i data-lucide="search" class="w-5 h-5 text-slate-300"></i>
+                        <input name="searchTerm" value="@Model.SearchTerm" type="text" placeholder="Designation or keyword..." 
+                               class="w-full py-4 bg-transparent outline-none font-bold text-slate-700 placeholder:font-normal placeholder:text-slate-300" />
+                    </div>
+                    <button type="submit" class="bg-slate-900 text-white px-12 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all shadow-xl shadow-slate-200 active:scale-95">
+                        Refresh View
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULTS GRID -->
+    <div class="container mx-auto px-6 mt-16">
+        @if (!Model.Results.Any())
+        {
+            <div class="bg-white border border-slate-200 rounded-[3.5rem] p-20 text-center shadow-sm max-w-2xl mx-auto animate-in zoom-in duration-500">
+                <div class="w-20 h-20 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-slate-100">
+                    <i data-lucide="inbox" class="w-10 h-10 text-slate-200"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900 mb-2">No Active Requisitions</h3>
+                <p class="text-slate-400 max-w-xs mx-auto text-sm leading-relaxed mb-10">We couldn't find any published roles matching your criteria. Broaden your search or check back soon.</p>
+                <a href="/Search" class="px-10 py-4 bg-emerald-50 text-emerald-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all">Clear Filters</a>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                @foreach (var job in Model.Results)
+                {
+                    <partial name="_JobCard" model="new Career635.Features.Jobs.Models.HomeJobViewModel(job.Id, job.Title, job.WorkLocation, job.LocationType, job.MinEducationLevel, job.RequiredExperienceYears, job.PostedAt, job.ExpiresAt)" />
+                }
+            </div>
+
+            <!-- PAGINATION CONTROLS -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="mt-24 flex flex-col items-center gap-6">
+                    <div class="flex items-center gap-2">
+                        <!-- Previous Button -->
+                        <a href="@Url.Action("Search", new { searchTerm = Model.SearchTerm, pageNumber = Model.PageNumber - 1 })" 
+                           class="pag-btn @(Model.HasPreviousPage ? "" : "disabled")">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </a>
+
+                        <!-- Page Number Pips -->
+                        <div class="flex items-center gap-2">
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                if (i == Model.PageNumber)
+                                {
+                                    <span class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-xl shadow-emerald-500/20 ring-4 ring-emerald-500/10">@i</span>
+                                }
+                                else if (i <= 3 || i >= Model.TotalPages - 1 || (i >= Model.PageNumber - 1 && i <= Model.PageNumber + 1))
+                                {
+                                    <a href="@Url.Action("Search", new { searchTerm = Model.SearchTerm, pageNumber = i })" 
+                                       class="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-600 flex items-center justify-center font-bold text-sm transition-all shadow-sm">@i</a>
+                                }
+                            }
+                        </div>
+
+                        <!-- Next Button -->
+                        <a href="@Url.Action("Search", new { searchTerm = Model.SearchTerm, pageNumber = Model.PageNumber + 1 })" 
+                           class="pag-btn @(Model.HasNextPage ? "" : "disabled")">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </a>
+                    </div>
+                    
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+                        Personnel Registry Page @Model.PageNumber of @Model.TotalPages
+                    </p>
+                </div>
+            }
+        }
+    </div>
+</section>
+
+<style>
+    .pag-btn { @@apply w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:border-emerald-600 hover:border-emerald-600 transition-all shadow-sm active:scale-95; }
+    .pag-btn.disabled { @@apply opacity-20 pointer-events-none grayscale bg-slate-50 border-transparent shadow-none; }
+</style>

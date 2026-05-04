@@ -1,0 +1,101 @@
+@model Career635.Areas.Admin.Models.RoleIndexViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Access Control Registry";
+}
+
+<div class="space-y-10 pb-20">
+    
+    <!-- HEADER SECTION -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 no-print">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Privilege Groups</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-3 pl-4 border-l-2 border-emerald-500">Access Control & Security Policies</p>
+        </div>
+        
+        <a asp-action="Create" class="flex items-center gap-3 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:bg-slate-900 transition-all active:scale-95">
+            <i data-lucide="shield-plus" class="w-4 h-4"></i> Define New Role
+        </a>
+    </div>
+
+    <!-- REGISTRY TABLE -->
+    <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-10 py-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+            <div class="flex items-center gap-4">
+                <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Active Security Groups</h3>
+                <span class="bg-white border border-slate-200 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded-lg">@Model.TotalCount Total</span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100">
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Role Identity</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Privileges</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Assigned Staff</th>
+                        <th class="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach (var role in Model.Items)
+                    {
+                        <tr class="hover:bg-slate-50/30 transition-colors group">
+                            <td class="px-10 py-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-emerald-500 shadow-lg">
+                                        <i data-lucide="shield" class="w-4 h-4"></i>
+                                    </div>
+                                    <p class="text-sm font-black text-slate-800 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">@role.Name</p>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6 max-w-xs">
+                                <p class="text-xs text-slate-500 font-medium line-clamp-1">@(role.Description ?? "No description provided.")</p>
+                            </td>
+                            <td class="px-6 py-6 text-center">
+                                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black border border-emerald-100 uppercase">
+                                    @role.PermissionCount Keys
+                                </span>
+                            </td>
+                            <td class="px-6 py-6 text-center">
+                                <div class="flex flex-col items-center">
+                                    <span class="text-sm font-black text-slate-700">@role.UserCount</span>
+                                    <span class="text-[8px] text-slate-400 font-bold uppercase tracking-tighter">Operators</span>
+                                </div>
+                            </td>
+                            <td class="px-10 py-6 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a href="/Admin/Roles/Edit/@role.Id" class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION FOOTER -->
+        <div class="px-10 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-6 no-print">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                Registry Page @Model.PageNumber <span class="mx-2 text-slate-200">/</span> @Model.TotalPages
+            </p>
+            
+            <div class="flex gap-2">
+                <a href="?page=@(Model.PageNumber - 1)" class="pag-btn @(Model.HasPreviousPage ? "" : "disabled")">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </a>
+                <a href="?page=@(Model.PageNumber + 1)" class="pag-btn @(Model.HasNextPage ? "" : "disabled")">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pag-btn { @@apply w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:border-emerald-600 hover:text-emerald-600 transition-all shadow-sm; }
+    .pag-btn.disabled { @@apply opacity-20 pointer-events-none grayscale bg-slate-50; }
+</style>
