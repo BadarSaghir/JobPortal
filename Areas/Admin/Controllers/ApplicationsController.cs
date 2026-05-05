@@ -64,6 +64,7 @@ public IActionResult GetFile(string path)
     return PhysicalFile(fullPath, contentType);
 }
     // 3. UPDATE DOSSIER STATUS
+   
     [HttpPost]
     [ValidateAntiForgeryToken]
         [Authorize(Policy = AppPermissions.ApplicantsManage)]

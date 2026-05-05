@@ -82,7 +82,7 @@
         <form method="get" class="bg-white p-2 rounded-3xl shadow-xl border border-slate-100 flex flex-col md:flex-row gap-2">
             <div class="flex-1 flex items-center px-5 gap-4 py-3">
                 <i data-lucide="shield-check" class="w-6 h-6 text-slate-300"></i>
-                <input name="code" value="@Model.SearchValue" type="text" placeholder="Tracking Reference or CNIC Number" 
+                <input name="code" value="@Model.SearchValue" type="text" placeholder="Tracking Reference (635-XXX) or CNIC Number (11111-1111111-1)" 
                        class="w-full bg-transparent outline-none font-bold text-secondary" />
             </div>
             <button type="submit" class="bg-secondary text-white px-10 py-4 rounded-2xl font-black hover:bg-primary transition-all">Authenticate Search</button>
@@ -131,7 +131,7 @@
                             <div class="p-title">Candidate Recruitment Application</div>
                             <div class="p-photo-box h-12">
                                 @if (!string.IsNullOrEmpty(app.Dossier.PhotoUrl)) {
-                                    <img src="/Admin/Applications/GetFile?path=@app.Dossier.PhotoUrl" style="width:100%; height:100%; object-fit:cover;" />
+                                    <img src="/Jobs/GetFile?path=@app.Dossier.PhotoUrl" style="width:100%; height:100%; object-fit:cover;" />
                                 } else { <span>Affix Passport Image</span> }
                             </div>
                         </div>
@@ -186,10 +186,14 @@
                         <table>
                             <tr><td width="25%"><strong>Technical Skills</strong></td><td colspan="3">@string.Join(", ", app.Dossier.Skills.Select(x => $"{x.Name}"))</td></tr>
                             <tr><td><strong>Certifications</strong></td><td colspan="3">@string.Join(", ", app.Dossier.Certifications.Select(x => x.Name))</td></tr>
-                            <tr><td><strong>Internal References</strong></td><td colspan="3">@string.Join(" | ", app.Dossier.Relatives.Select(x => $"{x.Name} ({x.Dept})"))</td></tr>
-                            @if(!string.IsNullOrEmpty(app.Dossier.Military.No)){
+                            @* <tr>
+                                <td><strong>Internal References</strong>
+                                </td>
+                            <td colspan="3">@string.Join(" | ", app.Dossier.Relatives.Select(x => $"{x.Name} ({x.Dept})"))</td>
+                            </tr> *@
+                            @* @if(!string.IsNullOrEmpty(app.Dossier.Military.No)){
                                 <tr><td><strong>Military Dossier</strong></td><td colspan="3">Service No: @app.Dossier.Military.No | Unit: @app.Dossier.Military.Unit | Character: @app.Dossier.Military.Character</td></tr>
-                            }
+                            } *@
                         </table>
 
                         <!-- V. ACHIEVEMENTS -->
