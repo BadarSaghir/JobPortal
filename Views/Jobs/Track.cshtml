@@ -120,10 +120,10 @@
                 <div id="print-source-@app.ApplicationId" class="hidden">
                     <div class="print-wrapper">
                         <!-- HEADER -->
-                        <div class="p-header">
-                            <img src="/career635.png" class="p-logo" />
-                            <div class="p-title">Candidate Recruitment Dossier</div>
-                            <div class="p-photo-box">
+                        <div class="p-header flex  gap-2">
+                            <img src="/career635.png" class="p-logo h-12" />
+                            <div class="p-title">Candidate Recruitment Application</div>
+                            <div class="p-photo-box h-12">
                                 @if (!string.IsNullOrEmpty(app.Dossier.PhotoUrl)) {
                                     <img src="/Admin/Applications/GetFile?path=@app.Dossier.PhotoUrl" style="width:100%; height:100%; object-fit:cover;" />
                                 } else { <span>Affix Passport Image</span> }
@@ -174,7 +174,7 @@
                                 </tr>
                             }
                         </table>
-
+<div class="break-after-all"></div>
                         <!-- IV. TECHNICAL CAPABILITIES & AFFILIATIONS -->
                         <div class="p-section-head">IV. Technical Capabilities & Affiliations</div>
                         <table>
