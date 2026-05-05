@@ -13,10 +13,16 @@
 
         /* --- PROFESSIONAL DOSSIER PRINT SYSTEM --- */
         #print-source { display: none; }
-
+.pagebreak{
+    height: 1px;
+        break-before: always;
+}
         @@media print {
             body { background: white !important; padding: 0 !important; margin: 0 !important; }
-            
+            .pagebreak{
+    height: 1px;
+        break-before: always;
+}
             .print-wrapper { 
                 display: block !important; 
                 width: 100%; 
@@ -174,7 +180,7 @@
                                 </tr>
                             }
                         </table>
-<div class="break-after-all"></div>
+<div class="break-after-all pagebreak"></div>
                         <!-- IV. TECHNICAL CAPABILITIES & AFFILIATIONS -->
                         <div class="p-section-head">IV. Technical Capabilities & Affiliations</div>
                         <table>
