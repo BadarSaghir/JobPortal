@@ -31,15 +31,20 @@ public async Task<IActionResult> Search(string? searchTerm = "", int pageNumber 
         return View(result);
     }
 
-    [HttpGet("Track")]
-public async Task<IActionResult> Track(string? code)
+[HttpGet("Track")]
+public async Task<IActionResult> Track(string? code, int pageNumber = 1)
 {
     if (string.IsNullOrWhiteSpace(code))
     {
         return View(new TrackViewModel(null, false, null));
     }
 
-    var result = await _queryProcessor.ExecuteAsync(new GetTrackStatusQuery { TrackingCode = code });
+    var query = new GetTrackStatusQuery { 
+        TrackingCode = code, 
+        PageNumber = pageNumber < 1 ? 1 : pageNumber 
+    };
+
+    var result = await _queryProcessor.ExecuteAsync(query);
     return View(new TrackViewModel(code, true, result));
 }
 }

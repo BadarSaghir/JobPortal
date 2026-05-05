@@ -1,111 +1,261 @@
 @model Career635.Features.Jobs.Models.TrackViewModel
 @{
-    ViewData["Title"] = "Application Tracker";
+    ViewData["Title"] = "Candidate Tracking Protocol | Career 635";
 }
 
-<div class="bg-slate-50 min-h-[80vh] py-20">
-    <div class="container mx-auto px-6 max-w-4xl">
-        
-        <!-- HEADER & SEARCH -->
-        <div class="text-center mb-16">
-            <h1 class="text-4xl md:text-5xl font-black text-secondary tracking-tighter mb-4">Track Status</h1>
-            <p class="text-slate-500 font-light mb-10">Enter your unique identity code to view recruitment progress.</p>
+@section Styles {
+    <style>
+        /* --- RECRUITMENT UI STYLES --- */
+        .status-pill { padding: 0.4rem 1rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid transparent; }
+        .status-pending { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+        .status-shortlisted { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .status-rejected { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+
+        /* --- PROFESSIONAL DOSSIER PRINT SYSTEM --- */
+        #print-source { display: none; }
+
+        @@media print {
+            body { background: white !important; padding: 0 !important; margin: 0 !important; }
             
-            <form method="get" asp-action="Track" class="max-w-xl mx-auto bg-white p-2 rounded-2xl shadow-2xl flex items-center gap-2">
-                <div class="flex-1 flex items-center px-4 gap-3 py-2">
-                    <i data-lucide="crosshair" class="w-5 h-5 text-slate-300"></i>
-                    <input name="code" value="@Model.TrackingCode" type="text" placeholder="e.g. C635-D00002B9" class="w-full bg-transparent outline-none font-bold text-secondary uppercase placeholder:normal-case placeholder:font-normal" />
-                </div>
-                <button type="submit" class="bg-secondary text-white px-8 py-3 rounded-xl font-bold hover:bg-primary transition-all">Verify</button>
-            </form>
+            .print-wrapper { 
+                display: block !important; 
+                width: 100%; 
+                font-family: "Times New Roman", Times, serif; 
+                color: black; 
+                padding: 12mm;
+                line-height: 1.3;
+            }
+
+            .p-header { border-bottom: 4px solid #000; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+            .p-logo { height: 65px; filter: grayscale(1); }
+            .p-title { font-size: 20pt; font-weight: 900; margin: 0; text-align: center; flex: 1; text-transform: uppercase; }
+            
+            .p-section-head { 
+                background: #e2e8f0 !important; 
+                font-weight: bold; padding: 6px 12px; 
+                margin-top: 18px; border: 1.5px solid #000; 
+                text-transform: uppercase; 
+                -webkit-print-color-adjust: exact; 
+                font-size: 10pt; 
+                letter-spacing: 1px;
+            }
+            
+            table { width: 100%; border-collapse: collapse; margin-top: 0; table-layout: fixed; }
+            th, td { border: 1px solid #000; padding: 6px 12px; text-align: left; font-size: 9.5pt; vertical-align: top; height: 24px; }
+            
+            .p-photo-box { width: 130px; height: 150px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 8pt; font-weight: bold; }
+            
+            .no-print { display: none !important; }
+            .p-footer { margin-top: 60px; font-size: 10pt; border-top: 1px solid #ccc; pt: 10px; }
+        }
+    </style>
+}
+
+@functions {
+    // Helper: If data is 0 or null, return empty for manual record entry
+    public string Val(object? val) {
+        if (val == null) return "";
+        string s = val.ToString()?.Trim() ?? "";
+        if (s == "0" || s == "0.00" || s == "N/A" || s.Contains("0001-01-01")) return "";
+        return s;
+    }
+}
+
+<div class="container mx-auto px-6 py-12 max-w-5xl no-print">
+    
+    <!-- SEARCH HEADER -->
+    <div class="mb-12 no-print">
+        <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
+            <img src="/career635.png" alt="Recruitment Portal" class="h-16" />
+            <div class="text-center md:text-left">
+                <h1 class="text-4xl font-black text-secondary tracking-tighter uppercase">Candidate Tracking</h1>
+                <p class="text-slate-500 font-medium">Verified Recruitment Identity Tracking System</p>
+            </div>
         </div>
 
-        @if (Model.Searched)
-        {
-            if (Model.Result != null)
+        <form method="get" class="bg-white p-2 rounded-3xl shadow-xl border border-slate-100 flex flex-col md:flex-row gap-2">
+            <div class="flex-1 flex items-center px-5 gap-4 py-3">
+                <i data-lucide="shield-check" class="w-6 h-6 text-slate-300"></i>
+                <input name="code" value="@Model.SearchValue" type="text" placeholder="Tracking Reference or CNIC Number" 
+                       class="w-full bg-transparent outline-none font-bold text-secondary" />
+            </div>
+            <button type="submit" class="bg-secondary text-white px-10 py-4 rounded-2xl font-black hover:bg-primary transition-all">Authenticate Search</button>
+        </form>
+    </div>
+
+    @if (Model.Searched && Model.Result != null)
+    {
+        <div class="space-y-6">
+            @foreach (var app in Model.Result.Applications)
             {
-                <!-- SUCCESS: STATUS CARD -->
-                <div class="bg-white rounded-[3rem] border border-slate-200 p-8 md:p-14 shadow-xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <div class="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
-                        <i data-lucide="shield-check" class="w-48 h-48"></i>
-                    </div>
-
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 pb-8 border-b border-slate-50 gap-6">
-                        <div>
-                            <span class="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2 block">Candidate Tracking</span>
-                            <h2 class="text-2xl font-black text-secondary leading-tight">@Model.Result.JobTitle</h2>
-                            <p class="text-xs text-slate-400 font-bold mt-1">Applied on @Model.Result.AppliedAt.ToString("MMM dd, yyyy")</p>
+                <div class="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm no-print">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div class="flex-1">
+                            <div class="flex flex-wrap items-center gap-2 mb-3">
+                                <span class="bg-slate-100 text-slate-400 px-2 py-1 rounded text-[8px] font-mono font-bold">REF: @app.TrackingCode</span>
+                                <span class="status-pill status-@app.Status.ToLower()">@app.Status</span>
+                            </div>
+                            <h2 class="text-2xl font-black text-secondary leading-tight">@app.JobTitle</h2>
+                            <p class="text-xs text-slate-400 font-bold mt-2">
+                                Submission Timestamp: <span class="local-time" data-utc="@app.AppliedAt.ToString("o")">@app.AppliedAt.ToString("f")</span>
+                            </p>
                         </div>
-                        <div class="px-6 py-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 font-black text-xs uppercase tracking-widest">
-                            @Model.Result.Status
-                        </div>
-                    </div>
-
-                    <!-- VISUAL TIMELINE -->
-                    <div class="relative px-4">
-                        <div class="absolute left-8 top-0 bottom-0 w-[2px] bg-slate-100 hidden md:block"></div>
                         
-                        <div class="space-y-12 relative z-10">
-                            <!-- Step 1: Submission -->
-                            <div class="flex gap-8 items-start">
-                                <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
-                                    <i data-lucide="check" class="w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-secondary text-sm">Application Received</h4>
-                                    <p class="text-xs text-slate-400 mt-1">Your 8-page profile is encrypted and stored in our database.</p>
-                                </div>
+                        @* @if (!app.IsExpired)
+                        {
+                            <button onclick="runDossierPrint('@app.ApplicationId')" class="bg-slate-900 text-white px-8 py-4 rounded-xl font-bold text-sm hover:bg-primary transition-all flex items-center gap-2">
+                                <i data-lucide="printer" class="w-4 h-4"></i> Print Application
+                            </button>
+                        }
+                        else
+                        {
+                            <div class="px-6 py-3 bg-red-50 text-red-500 rounded-xl text-[10px] font-black uppercase border border-red-100">
+                                Recruitment Expired
                             </div>
+                        } *@
+                    </div>
+                </div>
 
-                            <!-- Step 2: Merit Review -->
-                            @{ 
-                                var isReviewed = Model.Result.Status != "Pending";
-                                var isRejected = Model.Result.Status == "Rejected";
+                <!-- FULL PRINTABLE DOSSIER -->
+                <div id="print-source-@app.ApplicationId" class="hidden">
+                    <div class="print-wrapper">
+                        <!-- HEADER -->
+                        <div class="p-header">
+                            <img src="/career635.png" class="p-logo" />
+                            <div class="p-title">Candidate Recruitment Dossier</div>
+                            <div class="p-photo-box">
+                                @if (!string.IsNullOrEmpty(app.Dossier.PhotoUrl)) {
+                                    <img src="/Admin/Applications/GetFile?path=@app.Dossier.PhotoUrl" style="width:100%; height:100%; object-fit:cover;" />
+                                } else { <span>Affix Passport Image</span> }
+                            </div>
+                        </div>
+
+                        <div style="text-align:center; margin-bottom:15px;">
+                            <p style="margin:0; font-weight:bold; font-size:14pt;">APPLIED DESIGNATION: @app.JobTitle.ToUpper()</p>
+                            <p style="margin:2px 0; font-size:9pt; font-family:monospace;">SYSTEM ID: @app.TrackingCode</p>
+                        </div>
+
+                        <!-- I. IDENTIFICATION -->
+                        <div class="p-section-head">I. Identification Protocol</div>
+                        <table>
+                            <tr><td width="20%"><strong>Candidate Name</strong></td><td width="30%">@Val(app.Dossier.FullName)</td><td width="20%"><strong>CNIC Number</strong></td><td width="30%">@Val(app.Dossier.CNIC)</td></tr>
+                            <tr><td><strong>Father's Name</strong></td><td>@Val(app.Dossier.Personal.FatherName)</td><td><strong>Father's CNIC</strong></td><td>@Val(app.Dossier.Personal.FatherCNIC)</td></tr>
+                            <tr><td><strong>Date of Birth</strong></td><td>@Val(app.Dossier.Personal.DOB.ToString("dd-MMM-yyyy"))</td><td><strong>Gender/Marital</strong></td><td>@Val(app.Dossier.Personal.Gender) / @Val(app.Dossier.Personal.MaritalStatus)</td></tr>
+                            <tr><td><strong>Contact Ref.</strong></td><td>@Val(app.Dossier.Personal.ContactNo)</td><td><strong>Email Address</strong></td><td>@Val(app.Dossier.Personal.Email)</td></tr>
+                            <tr><td><strong>Religion/Caste</strong></td><td>@Val(app.Dossier.Personal.Religion) (@Val(app.Dossier.Personal.Caste))</td><td><strong>PEC Registration</strong></td><td>@Val(app.Dossier.Personal.PEC)</td></tr>
+                            <tr><td colspan="4"><strong>Residency (Present):</strong> @Val(app.Dossier.Personal.PresentAddress)</td></tr>
+                            <tr><td colspan="4"><strong>Residency (Permanent):</strong> @Val(app.Dossier.Personal.PermanentAddress)</td></tr>
+                        </table>
+
+                        <!-- II. ACADEMIC CREDENTIALS -->
+                        <div class="p-section-head">II. Academic Credentials</div>
+                        <table>
+                            <tr align="center" style="font-weight:bold; background:#f1f5f9;">
+                                <td width="25%">Degree/Level</td><td width="35%">Institution / University</td><td width="20%">Passing Year</td><td width="20%">Score/CGPA</td>
+                            </tr>
+                            @for(int i=0; i<Math.Max(app.Dossier.Educations.Count, 5); i++) {
+                                var e = i < app.Dossier.Educations.Count ? app.Dossier.Educations[i] : null;
+                                <tr><td>@Val(e?.Qualification)</td><td>@Val(e?.Institute)</td><td align="center">@Val(e?.To.Year)</td><td align="center">@Val(e?.Result)</td></tr>
                             }
-                            <div class="flex gap-8 items-start opacity-@(isReviewed ? "100" : "30")">
-                                <div class="w-8 h-8 rounded-lg bg-@(isReviewed ? (isRejected ? "red-500" : "primary") : "slate-200") text-white flex items-center justify-center shrink-0">
-                                    <i data-lucide="@(isRejected ? "x" : "search")" class="w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-secondary text-sm">Automated Merit Screening</h4>
-                                    <p class="text-xs text-slate-400 mt-1">Comparison of qualifications against role specifications.</p>
-                                </div>
-                            </div>
+                        </table>
 
-                            <!-- Step 3: Interview -->
-                            @{ var isInterviewed = Model.Result.Status == "Interviewed" || Model.Result.Status == "Offered"; }
-                            <div class="flex gap-8 items-start opacity-@(isInterviewed ? "100" : "30")">
-                                <div class="w-8 h-8 rounded-lg bg-@(isInterviewed ? "primary" : "slate-200") text-white flex items-center justify-center shrink-0">
-                                    <i data-lucide="mic" class="w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-secondary text-sm">Personnel Interview</h4>
-                                    <p class="text-xs text-slate-400 mt-1">Technical assessment and committee verification.</p>
-                                </div>
+                        <!-- III. PROFESSIONAL TENURE -->
+                        <div class="p-section-head">III. Professional Tenure</div>
+                        <table>
+                            <tr align="center" style="font-weight:bold; background:#f1f5f9;">
+                                <td width="30%">Organization</td><td width="25%">Designation</td><td width="25%">Tenure Period</td><td width="20%">Responsibilities</td>
+                            </tr>
+                            @for(int i=0; i<Math.Max(app.Dossier.Experiences.Count, 4); i++) {
+                                var ex = i < app.Dossier.Experiences.Count ? app.Dossier.Experiences[i] : null;
+                                <tr>
+                                    <td>@Val(ex?.Org)</td><td>@Val(ex?.Designation)</td>
+                                    <td align="center">@(ex != null ? $"{ex.From:MMM yyyy} - {(ex.To?.ToString("MMM yyyy") ?? "Present")}" : "")</td>
+                                    <td>@Val(ex?.Responsibilities)</td>
+                                </tr>
+                            }
+                        </table>
+
+                        <!-- IV. TECHNICAL CAPABILITIES & AFFILIATIONS -->
+                        <div class="p-section-head">IV. Technical Capabilities & Affiliations</div>
+                        <table>
+                            <tr><td width="25%"><strong>Technical Skills</strong></td><td colspan="3">@string.Join(", ", app.Dossier.Skills.Select(x => $"{x.Name}"))</td></tr>
+                            <tr><td><strong>Certifications</strong></td><td colspan="3">@string.Join(", ", app.Dossier.Certifications.Select(x => x.Name))</td></tr>
+                            <tr><td><strong>Internal References</strong></td><td colspan="3">@string.Join(" | ", app.Dossier.Relatives.Select(x => $"{x.Name} ({x.Dept})"))</td></tr>
+                            @if(!string.IsNullOrEmpty(app.Dossier.Military.No)){
+                                <tr><td><strong>Military Dossier</strong></td><td colspan="3">Service No: @app.Dossier.Military.No | Unit: @app.Dossier.Military.Unit | Character: @app.Dossier.Military.Character</td></tr>
+                            }
+                        </table>
+
+                        <!-- V. ACHIEVEMENTS -->
+                        <div class="p-section-head">V. Accomplishments & Commendations</div>
+                        <div style="border:1px solid #000; padding:12px; min-height:80px; font-size:9pt;">
+                            @string.Join(" | ", app.Dossier.Achievements.Select(x => x.Title))
+                        </div>
+
+                        <!-- FOOTER -->
+                        <div class="p-footer">
+                            <p style="font-style:italic;"><strong>Declaration:</strong> The signatory affirms the veracity of the enclosed documentation and personal data. Any deviation from factual truth discovered during verification protocols shall mandate immediate disqualification and potential legal recourse.</p>
+                            <div style="display:flex; justify-content:space-between; margin-top:50px;">
+                                <div style="text-align:center; border-top:1.5px solid #000; width:220px; padding-top:5px;">Submission Date</div>
+                                <div style="text-align:center; border-top:1.5px solid #000; width:250px; padding-top:5px;">Candidate Authentication</div>
                             </div>
+                            <p style="text-align:right; font-size:7pt; margin-top:20px; color:#666;">Generated via Career635 Secure Gateway on <span class="local-time-print">@DateTime.UtcNow.ToString("O")</span></p>
                         </div>
                     </div>
+                </div>
+            }
 
-                    @if (!string.IsNullOrEmpty(Model.Result.Remarks))
+            <!-- PAGINATION -->
+            @if (Model.Result.TotalPages > 1)
+            {
+                <div class="flex justify-center items-center gap-2 mt-12 no-print">
+                    @for (int i = 1; i <= Model.Result.TotalPages; i++)
                     {
-                        <div class="mt-12 p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                            <h5 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Recruiter Remarks</h5>
-                            <p class="text-xs text-slate-600 leading-relaxed italic">"@Model.Result.Remarks"</p>
-                        </div>
+                        <a href="?code=@Model.SearchValue&pageNumber=@i" 
+                           class="w-10 h-10 flex items-center justify-center rounded-xl font-black transition-all @(i == Model.Result.CurrentPage ? "bg-secondary text-white" : "bg-white border border-slate-200 text-slate-400 hover:text-secondary")">@i</a>
                     }
                 </div>
             }
-            else
-            {
-                <!-- ERROR: CODE NOT FOUND -->
-                <div class="bg-white rounded-[3rem] border border-slate-200 p-16 text-center shadow-sm animate-in zoom-in duration-500">
-                    <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-red-500">
-                        <i data-lucide="alert-circle" class="w-8 h-8"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-secondary mb-2">Invalid Tracking Identity</h3>
-                    <p class="text-slate-400 max-w-xs mx-auto text-sm leading-relaxed">We couldn't find any submission associated with the code <strong>@Model.TrackingCode</strong>. Please check your spelling and try again.</p>
-                </div>
-            }
-        }
-    </div>
+        </div>
+    }
+    else if (Model.Searched)
+    {
+        <div class="bg-white rounded-[3rem] border border-slate-200 p-20 text-center shadow-sm no-print">
+            <i data-lucide="shield-alert" class="w-12 h-12 text-slate-200 mx-auto mb-4"></i>
+            <h3 class="text-xl font-black text-secondary uppercase">Access Denied</h3>
+            <p class="text-slate-500 max-w-sm mx-auto">No recruitment records match the provided authentication credentials.</p>
+        </div>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        // UTC to Local Time Conversion
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('.local-time').forEach(el => {
+                const date = new Date(el.getAttribute('data-utc'));
+                el.innerText = date.toLocaleString();
+            });
+            document.querySelectorAll('.local-time-print').forEach(el => {
+                const date = new Date(el.innerText);
+                el.innerText = date.toLocaleString();
+            });
+        });
+
+        function runDossierPrint(id) {
+            const content = document.getElementById('print-source-' + id).innerHTML;
+            const originalBody = document.body.innerHTML;
+
+            document.body.innerHTML = content;
+            window.print();
+
+            // Restore and refresh
+            document.body.innerHTML = originalBody;
+            window.location.reload();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            if (typeof lucide !== 'undefined') lucide.createIcons(); 
+        });
+    </script>
+}

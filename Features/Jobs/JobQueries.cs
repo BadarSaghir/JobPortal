@@ -171,32 +171,80 @@ public override async Task<JobDetailViewModel?> ExecuteAsync(GetJobDetailQuery q
 }
 
 
-public class GetTrackStatusQuery : IQuery<ApplicationStatusDto?> 
+public class GetTrackStatusQuery : IQuery<TrackResultViewModel?> 
 {
     public string TrackingCode { get; set; } = string.Empty;
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 5; // Detail-heavy rows, keep count low per page
 }
 
-public class GetTrackStatusHandler : QueryHandlerAsync<GetTrackStatusQuery, ApplicationStatusDto?>
+
+public class GetTrackStatusHandler(AppDbContext _context) : QueryHandlerAsync<GetTrackStatusQuery, TrackResultViewModel?>
 {
-    private readonly AppDbContext _context;
-    public GetTrackStatusHandler(AppDbContext context) => _context = context;
-
-    public override async Task<ApplicationStatusDto?> ExecuteAsync(GetTrackStatusQuery query, CancellationToken ct = default)
+    public override async Task<TrackResultViewModel?> ExecuteAsync(GetTrackStatusQuery query, CancellationToken ct = default)
     {
-        // Join Application with Applicant to find by TrackingCode
-        var app = await _context.JobApplications
-            .AsNoTracking()
+        var input = query.TrackingCode?.Trim() ?? "";
+        if (string.IsNullOrEmpty(input)) return null;
+
+        // 1. Build Base Query - Search BOTH CNIC and TrackingCode columns
+        // This ensures that if it matches either, we get the results.
+        var baseQuery = _context.JobApplications.AsNoTracking()
+            .Where(x => x.Applicant.CNICNumber == input || x.Applicant.TrackingCode == input);
+
+        // 2. Get Total Count for Pagination
+        var totalCount = await baseQuery.CountAsync(ct);
+        if (totalCount == 0) return null;
+
+        var totalPages = (int)Math.Ceiling(totalCount / (double)query.PageSize);
+
+        // 3. Fetch Paginated Results with ALL Relationships
+        var data = await baseQuery
             .Include(ja => ja.JobOpening)
-            .Include(ja => ja.Applicant)
-            .FirstOrDefaultAsync(ja => ja.Applicant.TrackingCode == query.TrackingCode, ct);
+            .Include(ja => ja.Applicant).ThenInclude(a => a.PersonalInfo)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.FamilySummary)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.FinancialDetail)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.MilitaryDetail)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.Educations)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.Experiences)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.Siblings)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.InternalRelatives)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.Certifications)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.Skills)
+            .Include(ja => ja.Applicant).ThenInclude(a => a.Achievements)
+            .OrderByDescending(x => x.AppliedAt)
+            .Skip((query.PageNumber - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync(ct);
 
-        if (app == null) return null;
+        // 4. Map to ViewModels (Ensure logic handles 0 or nulls)
+        var apps = data.Select(ja => new ApplicationStatusViewModel(
+            ja.Id, 
+            ja.JobOpening.Title, 
+            ja.AppliedAt, 
+            ja.Status, 
+            ja.RecruiterRemarks, 
+            ja.Applicant.TrackingCode,
+            new ApplicantDossierViewModel(
+                ja.Applicant.FullName, 
+                ja.Applicant.CNICNumber, 
+                ja.Applicant.PassportImageUrl,
+                new PersonalInfoVM(ja.Applicant.PersonalInfo.FatherName, ja.Applicant.PersonalInfo.FatherCNIC, ja.Applicant.PersonalInfo.DateOfBirth, ja.Applicant.PersonalInfo.Gender, ja.Applicant.PersonalInfo.MaritalStatus, ja.Applicant.PersonalInfo.Religion, ja.Applicant.PersonalInfo.Caste, ja.Applicant.PersonalInfo.Sect, ja.Applicant.PersonalInfo.ContactNo, ja.Applicant.PersonalInfo.Email, ja.Applicant.PersonalInfo.PECNumber, ja.Applicant.PersonalInfo.PresentAddress, ja.Applicant.PersonalInfo.PermanentAddress, ja.Applicant.PersonalInfo.Accommodation),
+                new FamilyVM(ja.Applicant.FamilySummary.BrothersTotal, ja.Applicant.FamilySummary.BrothersMarried, ja.Applicant.FamilySummary.BrothersUnmarried, ja.Applicant.FamilySummary.SistersTotal, ja.Applicant.FamilySummary.SistersMarried, ja.Applicant.FamilySummary.SistersUnmarried, ja.Applicant.FamilySummary.ChildrenTotal, ja.Applicant.FamilySummary.ChildrenMarried, ja.Applicant.FamilySummary.ChildrenUnmarried),
+                new FinancialVM(ja.Applicant.FinancialDetail.CurrentSalary, ja.Applicant.FinancialDetail.ExpectedSalary, ja.Applicant.FinancialDetail.OtherBenefits, ja.Applicant.FinancialDetail.FamilyIncomeDetail, ja.Applicant.FinancialDetail.OtherFacilities),
+                new MilitaryVM(ja.Applicant.MilitaryDetail.ArmyNumber, ja.Applicant.MilitaryDetail.ArmyUnit, ja.Applicant.MilitaryDetail.ArmyCharacter, ja.Applicant.MilitaryDetail.ArmyPayScale),
+                ja.Applicant.Educations.Select(e => new EducationVM(e.Qualification, e.MajorField, e.BoardUniversity, e.CgpaPercentage, e.FromDate, e.ToDate)).ToList(),
+                ja.Applicant.Experiences.Select(e => new ExperienceVM(e.OrganizationName, e.Designation, e.KeyResponsibilities, e.FromDate, e.ToDate)).ToList(),
+                ja.Applicant.Siblings.Select(s => new SiblingVM(s.Name, s.CNIC, s.Gender, s.Occupation, s.MaritalStatus)).ToList(),
+                ja.Applicant.InternalRelatives.Select(r => new RelativeVM(r.RelativeName, r.Designation, r.Department, r.PayScale)).ToList(),
+                ja.Applicant.Certifications.Select(c => new CertVM(c.CertificateName, c.IssuingBody)).ToList(),
+                ja.Applicant.Skills.Select(s => new SkillVM(s.SkillName, s.Proficiency)).ToList(),
+                ja.Applicant.Achievements.Select(a => new AchVM(a.Title, a.Description, a.DateReceived)).ToList()
+            )
+        )).ToList();
 
-        return new ApplicationStatusDto(
-            app.JobOpening.Title,
-            app.AppliedAt,
-            app.Status,
-            app.RecruiterRemarks
-        );
+        // Check if the input used was a CNIC to set the flag correctly (for UI messages)
+        bool isCnicSearch = input.Contains("-") && !input.StartsWith("C635");
+
+        return new TrackResultViewModel(apps, isCnicSearch, query.PageNumber, totalPages, totalCount);
     }
 }
