@@ -16,14 +16,14 @@ public static class SecurityExtensions
             .RemoveServerHeader()
                    .RemoveServerHeader()
             
-            // 2. REMOVE X-Powered-By header (IIS/ASP.NET)
-            .RemovePoweredByHeader()
+            // // 2. REMOVE X-Powered-By header (IIS/ASP.NET)
+            // .RemovePoweredByHeader()
             
-            // 3. REMOVE X-AspNet-Version header
-            .RemoveAspNetVersionHeaders()
+            // // 3. REMOVE X-AspNet-Version header
+            // .RemoveAspNetVersionHeaders()
             
-            // 4. REMOVE X-AspNetMvc-Version header
-            .RemoveMvcVersionHeader()
+            // // 4. REMOVE X-AspNetMvc-Version header
+            // .RemoveMvcVersionHeader()
                   
             .AddContentSecurityPolicy(builder =>
             {
