@@ -3,6 +3,13 @@ using Career635.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseKestrel(options =>
+{
+    options.AddServerHeader = false;
+});
+
+// Or globally suppress all default headers
+
 builder.Services.AddDistributedMemoryCache(); // Required for Session
 builder.Services.AddSession(options =>
 {
@@ -40,6 +47,18 @@ using (var scope = app.Services.CreateScope())
     Console.WriteLine($"Error during seeding: {ex.Message}");
   }
 }
+
+app.Use(async (context, next) =>
+{
+    // Remove any lingering server headers
+    context.Response.Headers.Remove("Server");
+    context.Response.Headers.Remove("X-Powered-By");
+    context.Response.Headers.Remove("X-AspNet-Version");
+    context.Response.Headers.Remove("X-AspNetMvc-Version");
+    context.Response.Headers.Remove("Microsoft-IIS");
+    
+    await next();
+});
 app.UseSecurityHeaders(SecurityExtensions.GetSecurityPolicy(app.Environment.IsDevelopment()));
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {

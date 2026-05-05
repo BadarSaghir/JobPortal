@@ -14,6 +14,17 @@ public static class SecurityExtensions
             .AddContentTypeOptionsNoSniff()
             .AddReferrerPolicyStrictOriginWhenCrossOrigin()
             .RemoveServerHeader()
+                   .RemoveServerHeader()
+            
+            // 2. REMOVE X-Powered-By header (IIS/ASP.NET)
+            .RemovePoweredByHeader()
+            
+            // 3. REMOVE X-AspNet-Version header
+            .RemoveAspNetVersionHeaders()
+            
+            // 4. REMOVE X-AspNetMvc-Version header
+            .RemoveMvcVersionHeader()
+                  
             .AddContentSecurityPolicy(builder =>
             {
                 // Default: block everything except our own domain
@@ -47,6 +58,27 @@ public static class SecurityExtensions
 
      
 
+        return policy;
+    }
+        private static HeaderPolicyCollection RemovePoweredByHeader(this HeaderPolicyCollection policy)
+    {
+        policy.AddCustomHeader("X-Powered-By", "");
+        return policy;
+    }
+    
+    // Extension method to remove ASP.NET version headers
+    private static HeaderPolicyCollection RemoveAspNetVersionHeaders(this HeaderPolicyCollection policy)
+    {
+        // This removes X-AspNet-Version header
+        policy.AddCustomHeader("X-AspNet-Version", "");
+        return policy;
+    }
+    
+    // Extension method to remove MVC version header
+    private static HeaderPolicyCollection RemoveMvcVersionHeader(this HeaderPolicyCollection policy)
+    {
+        // This removes X-AspNetMvc-Version header
+        policy.AddCustomHeader("X-AspNetMvc-Version", "");
         return policy;
     }
 }
