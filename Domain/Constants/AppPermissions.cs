@@ -14,6 +14,8 @@ public static class AppPermissions
     public const string CampaignsManage = "campaigns.manage";
     public const string RolesManage = "roles.manage";
     public const string StaffManage = "staff.manage";
+        public const string SupportManage = "support.manage";
+
 
     public static List<(string Name, string Module, string Display)> AllPermissions => new()
     {
@@ -25,6 +27,7 @@ public static class AppPermissions
         (ApplicantsExport, "Applicants", "Export Campaign Data"),
         (CampaignsManage, "Campaigns", "Manage Recruitment Batches"),
         (RolesManage, "Security", "Manage Roles and Privileges"),
+        (SupportManage, "Support", "Manage Support And Queries"),
         (StaffManage, "Security", "Manage Internal Personnel")
     };
 }

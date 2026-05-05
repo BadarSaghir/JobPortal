@@ -92,7 +92,12 @@
                             <i data-lucide="layers" class="w-4.5 h-4.5"></i> Active Batches
                         </a>
                     }
-
+  @if (User.HasClaim("Permission", AppPermissions.SupportManage))
+                    {
+                        <a href="/Admin/Support/list" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all @(currentController == "Campaigns" ? activeClass : inactiveClass)">
+                            <i data-lucide="hand-helping" class="w-4.5 h-4.5"></i> Support
+                        </a>
+                    }
                     @if (User.HasClaim("Permission", AppPermissions.JobsManage))
                     {
                         <a href="/Admin/Reports" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all @(currentController == "Reports" ? activeClass : inactiveClass)">
