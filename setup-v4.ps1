@@ -3,6 +3,7 @@ if (!(Test-Path "package.json")) { npm init -y }
 
 # 2. Install Tailwind v4 (Alpha/Beta/Stable CLI)
 npm install @tailwindcss/cli
+#  "DefaultConnection": "Server=(local);Database=Career635DB;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=true;",
 
 # 3. Create the CSS entry point (The v4 way)
 

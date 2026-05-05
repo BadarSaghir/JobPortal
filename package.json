@@ -1,0 +1,27 @@
+{
+  "name": "career635",
+  "version": "1.0.0",
+  "description": "This is the comprehensive **`README.md`** for the **Career 635** project. It serves as the master guide for developers and system administrators, covering everything from the architecture and local asset setup to database management on Linux.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "./node_modules/@tailwindcss/cli/dist/index.mjs -i ./wwwroot/css/site.css -o  ./wwwroot/dist/style.css --watch",
+    "build": "./node_modules/@tailwindcss/cli/dist/index.mjs -i ./wwwroot/css/site.css  -o  ./wwwroot/dist/style.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BadarSaghir/JobPortal.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/BadarSaghir/JobPortal/issues"
+  },
+  "homepage": "https://github.com/BadarSaghir/JobPortal#readme",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.2.4",
+    "tailwindcss": "^4.2.4"
+  }
+}

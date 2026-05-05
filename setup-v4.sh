@@ -6,7 +6,8 @@ if [ ! -f package.json ]; then
     npm init -y
 fi
 
-# 2. Install Tailwind v4 CLI
+# 2. Install Tailwind v4 CLI   "DefaultConnection": "Server=localhost,1433;Database=Career635DB;User Id=sa;Password=Abcd1234..;TrustServerCertificate=True;MultipleActiveResultSets=true",
+
 echo "Installing Tailwind v4..."
 npm install @tailwindcss/cli
 
