@@ -2,6 +2,7 @@ using Paramore.Brighter;
 using Career635.Infrastructure.Persistence;
 using Career635.Domain.Entities.Auth;
 using Microsoft.EntityFrameworkCore;
+using Career635.Domain.Constants;
 
 namespace Career635.Features.Support;
 
@@ -19,21 +20,38 @@ public class SubmitSupportHandler(AppDbContext context) : RequestHandlerAsync<Su
     {
         // 1. Save Ticket
         var ticket = new SupportTicket {
+
             Email = command.Email,
             Message = command.Message,
             IPAddress = command.IP,
-            UserAgent = command.Agent
+            UserAgent = command.Agent,
+            Status = "Open"
         };
         context.Set<SupportTicket>().Add(ticket);
+        await context.SaveChangesAsync(ct); // Save to get ticket.Id
 
         // 2. Create System Notification for Admins
-        var admins = await context.Users.ToListAsync(ct); // In real app, filter by SuperAdmin role
-        foreach(var admin in admins) {
+          // 2. Create System Notification ONLY for users with SystemAll permission
+        // var admins = await context.RolePermissions.Include(p=>p.Permission)
+        //     .Where(u => u.Permission.Name == AppPermissions.SystemAll)
+        //     .ToListAsync(ct); // In real app, filter by SuperAdmin role
+     var admins = from users in context.Users
+             join userRoles in context.UserRoles on users.Id equals userRoles.UserId
+             join rolePermissions in context.RolePermissions on userRoles.RoleId equals rolePermissions.RoleId
+             join permissions in context.Permissions on rolePermissions.PermissionId equals permissions.Id
+             where permissions.Name == AppPermissions.SystemAll  // WHERE clause for permission name
+             select users;
+             var adminUsers = await admins.Distinct().ToListAsync(ct);
+
+        foreach(var admin in adminUsers) {
             context.Set<UserNotification>().Add(new UserNotification {
                 UserId = admin.Id,
                 Title = "New Technical Support Request",
-                Message = $"Query from {command.Email}: {command.Message.Substring(0, Math.Min(command.Message.Length, 50))}...",
-                Type = "Urgent"
+                Message = $"Query from {command.Email}: {command.Message.Substring(0, Math.Min(command.Message.Length, 10))}...",
+                Type = "Urgent",
+                    ActionUrl = $"/admin/support/ticket/{ticket.Id}"  // Link to ticket detail, not notification
+
+               
             });
         }
 

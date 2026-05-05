@@ -2,7 +2,7 @@
 /dist
 /temp_exports
 /uploads
-
+/node_modules
 /bin/*
 /dist/*
 /temp_exports/*

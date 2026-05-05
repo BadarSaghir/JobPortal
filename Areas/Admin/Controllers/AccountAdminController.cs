@@ -122,6 +122,8 @@ public async Task<IActionResult> NotificationDetails(Guid id)
 
     return View(notification);
 }
+
+
 [HttpGet("Enable2FA")]
 public async Task<IActionResult> Enable2FA()
 {
@@ -177,4 +179,27 @@ public async Task<IActionResult> Disable2FA()
     TempData["Success"] = "Two-factor authentication has been disabled.";
     return RedirectToAction(nameof(Profile));
 }
+
+   [HttpGet("ticket/{id:guid}")]
+    public async Task<IActionResult> TicketDetail(Guid id)
+    {
+        var ticket = await _context.SupportTickets
+            .FirstOrDefaultAsync(t => t.Id == id);
+        
+        if (ticket == null) return NotFound();
+        
+        return View(ticket);
+    }
+    
+    // [HttpPost("ticket/{id:guid}/reply")]
+    // public async Task<IActionResult> AddReply(Guid id, string message)
+    // {
+    //     // Add reply logic
+    // }
+    
+    // [HttpPost("ticket/{id:guid}/status")]
+    // public async Task<IActionResult> UpdateStatus(Guid id, string status)
+    // {
+    //     // Update ticket status (Open, InProgress, Resolved, Closed)
+    // }
 }

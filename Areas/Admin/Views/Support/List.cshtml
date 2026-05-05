@@ -1,0 +1,305 @@
+<!-- Areas/Admin/Views/Support/List.cshtml -->
+@model List<Career635.Areas.Admin.Models.SupportTicketViewModel>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Support Tickets";
+}
+
+<div class="space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">Support Tickets</h1>
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Manage user inquiries and technical support requests</p>
+        </div>
+        
+        <!-- Statistics Summary -->
+        <div class="flex gap-3">
+            <div class="px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total</span>
+                <span class="ml-2 text-sm font-black text-slate-900">@ViewBag.TotalCount</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Filter Tabs -->
+    <div class="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex flex-wrap gap-1">
+            @foreach (var status in (string[])ViewBag.StatusOptions)
+            {
+                var isActive = (ViewBag.CurrentStatus == null && status == "All") || ViewBag.CurrentStatus == status;
+                <a asp-action="List" asp-route-status="@(status == "All" ? null : status)" 
+                   class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all @(isActive ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100")">
+                    @status
+                    @if (status != "All")
+                    {
+                        <span class="ml-2 px-1.5 py-0.5 rounded-full @(isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500") text-[8px]">
+                            @(status == "Open" ? ViewBag.OpenCount : 
+                              status == "InProgress" ? ViewBag.InProgressCount : 
+                              status == "Resolved" ? ViewBag.ResolvedCount : 
+                              status == "Closed" ? ViewBag.ClosedCount : 0)
+                        </span>
+                    }
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Search Bar (Optional) -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="get" class="flex gap-3">
+            <div class="flex-1 relative">
+                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <input type="text" name="search" value="@ViewBag.SearchTerm" 
+                       placeholder="Search by email or message..." 
+                       class="w-full pl-10 pr-4 py-2.5 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 text-sm" />
+            </div>
+            <button type="submit" class="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all">
+                Search
+            </button>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+            {
+                <a asp-action="List" asp-route-status="@ViewBag.CurrentStatus" class="px-6 py-2.5 border border-slate-200 rounded-xl text-[10px] font-black text-slate-500 hover:bg-slate-50 transition-all">
+                    Clear
+                </a>
+            }
+        </form>
+    </div>
+
+    <!-- Tickets Table View -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Ticket ID</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">From</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Message</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Created</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @foreach (var ticket in Model)
+                    {
+                        <tr class="hover:bg-slate-50/50 transition-all group">
+                            <td class="px-6 py-4">
+                                <span class="font-mono text-xs font-bold text-slate-600">#@ticket.Id.ToString().Substring(0, 8)</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400"></i>
+                                    <span class="text-sm text-slate-700">@ticket.Email</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm text-slate-600 max-w-md truncate">@ticket.Message</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider @ticket.StatusBadgeClass border">
+                                    @ticket.Status
+                                </span>
+                            </td>
+                       
+                            <td class="px-6 py-4">
+                                <div class="text-xs text-slate-500">
+                                    <div>@ticket.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                    <div class="text-[9px] text-slate-400">@ticket.TimeAgo</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <a asp-action="TicketDetail" asp-route-id="@ticket.Id" 
+                                   class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all">
+                                    View <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Empty State -->
+        @if (!Model.Any())
+        {
+            <div class="p-16 text-center">
+                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="ticket" class="w-10 h-10 text-slate-300"></i>
+                </div>
+                <h3 class="text-sm font-black text-slate-500 uppercase tracking-wider mb-2">No Tickets Found</h3>
+                <p class="text-xs text-slate-400">
+                    @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+                    {
+                        <span>No tickets matching "@ViewBag.SearchTerm"</span>
+                    }
+                    else if (ViewBag.CurrentStatus != null && ViewBag.CurrentStatus != "All")
+                    {
+                        <span>No @ViewBag.CurrentStatus tickets available</span>
+                    }
+                    else
+                    {
+                        <span>No support tickets have been submitted yet</span>
+                    }
+                </p>
+            </div>
+        }
+        
+        <!-- Pagination -->
+        @if (ViewBag.TotalPages > 1)
+        {
+            <div class="px-6 py-5 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="text-[10px] text-slate-500">
+                    Showing <span class="font-bold text-slate-900">@Model.Count</span> of <span class="font-bold text-slate-900">@ViewBag.TotalCount</span> tickets
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    @if (ViewBag.CurrentPage > 1)
+                    {
+                        <a asp-action="List" 
+                           asp-route-status="@ViewBag.CurrentStatus" 
+                           asp-route-search="@ViewBag.SearchTerm"
+                           asp-route-page="@(ViewBag.CurrentPage - 1)" 
+                           class="pag-btn">
+                            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                            <span>Prev</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="pag-btn disabled">
+                            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                            <span>Prev</span>
+                        </div>
+                    }
+
+                    <div class="flex items-center gap-1">
+                        @{
+                            int startPage = Math.Max(1, ViewBag.CurrentPage - 2);
+                            int endPage = Math.Min(ViewBag.TotalPages, startPage + 4);
+                            
+                            if (startPage > 1)
+                            {
+                                <a asp-action="List" 
+                                   asp-route-status="@ViewBag.CurrentStatus"
+                                   asp-route-search="@ViewBag.SearchTerm"
+                                   asp-route-page="1" 
+                                   class="page-num">1</a>
+                                if (startPage > 2)
+                                {
+                                    <span class="px-1 text-slate-400">...</span>
+                                }
+                            }
+                            
+                            for (int i = startPage; i <= endPage; i++)
+                            {
+                                <a asp-action="List" 
+                                   asp-route-status="@ViewBag.CurrentStatus"
+                                   asp-route-search="@ViewBag.SearchTerm"
+                                   asp-route-page="@i" 
+                                   class="page-num @(i == ViewBag.CurrentPage ? "active" : "")">@i</a>
+                            }
+                            
+                            if (endPage < ViewBag.TotalPages)
+                            {
+                                if (endPage < ViewBag.TotalPages - 1)
+                                {
+                                    <span class="px-1 text-slate-400">...</span>
+                                }
+                                <a asp-action="List" 
+                                   asp-route-status="@ViewBag.CurrentStatus"
+                                   asp-route-search="@ViewBag.SearchTerm"
+                                   asp-route-page="@ViewBag.TotalPages" 
+                                   class="page-num">@ViewBag.TotalPages</a>
+                            }
+                        }
+                    </div>
+
+                    @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                    {
+                        <a asp-action="List" 
+                           asp-route-status="@ViewBag.CurrentStatus"
+                           asp-route-search="@ViewBag.SearchTerm"
+                           asp-route-page="@(ViewBag.CurrentPage + 1)" 
+                           class="pag-btn">
+                            <span>Next</span>
+                            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="pag-btn disabled">
+                            <span>Next</span>
+                            <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .pag-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+
+    .pag-btn:hover {
+        border-color: #10b981;
+        color: #10b981;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .pag-btn.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+        background-color: #f8fafc;
+    }
+    
+    .page-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2rem;
+        height: 2rem;
+        padding: 0 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+    
+    .page-num:hover {
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+    
+    .page-num.active {
+        background-color: #0f172a;
+        color: white;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+}
