@@ -122,40 +122,7 @@ public async Task<IActionResult> List(string? status = null, string? search = nu
         return RedirectToAction(nameof(TicketDetail), new { id });
     }
 
-    [HttpGet("list")]
-    public async Task<IActionResult> List(string? status = null, int page = 1, int pageSize = 20)
-    {
-        var query = _context.SupportTickets.AsQueryable();
-        
-        if (!string.IsNullOrEmpty(status) && status != "All")
-        {
-            query = query.Where(t => t.Status == status);
-        }
-        
-        var totalCount = await query.CountAsync();
-        var tickets = await query
-            .OrderByDescending(t => t.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(t => new SupportTicketViewModel
-            {
-                Id = t.Id,
-                Email = t.Email,
-                Message = t.Message.Length > 100 ? t.Message.Substring(0, 100) + "..." : t.Message,
-                Status = t.Status,
-                CreatedAt = t.CreatedAt.DateTime
-                
-            })
-            .ToListAsync();
-        
-        ViewBag.CurrentStatus = status;
-        ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        ViewBag.TotalCount = totalCount;
-        ViewBag.StatusOptions = new[] { "All", "Open", "InProgress", "Resolved", "Closed" };
-        
-        return View(tickets);
-    }
+ 
     
     [HttpPost("ticket/{id:guid}/delete")]
     [ValidateAntiForgeryToken]
