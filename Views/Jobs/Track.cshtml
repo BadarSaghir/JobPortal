@@ -1,6 +1,12 @@
 @model Career635.Features.Jobs.Models.TrackViewModel
 @{
     ViewData["Title"] = "Candidate Tracking Protocol | Career 635";
+  // Helper for secure file streaming
+    string GetUrl(string? path) => string.IsNullOrEmpty(path) 
+        ? "" 
+        : Url.Action("GetFile", "Jobs", new { path = path }) ?? "";
+
+
 }
 
 @section Styles {
@@ -131,7 +137,7 @@
                             <div class="p-title">Candidate Recruitment Application</div>
                             <div class="p-photo-box h-12">
                                 @if (!string.IsNullOrEmpty(app.Dossier.PhotoUrl)) {
-                                    <img src="/Jobs/GetFile?path=@app.Dossier.PhotoUrl" style="width:100%; height:100%; object-fit:cover;" />
+                                    <img src="@GetUrl(app.Dossier.PhotoUrl)" style="width:100%; height:100%; object-fit:cover;" />
                                 } else { <span>Affix Passport Image</span> }
                             </div>
                         </div>
