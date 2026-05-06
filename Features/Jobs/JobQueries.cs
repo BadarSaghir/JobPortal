@@ -221,6 +221,8 @@ public class GetTrackStatusHandler(AppDbContext _context) : QueryHandlerAsync<Ge
             ja.Id, 
             ja.JobOpening.Title, 
             ja.AppliedAt, 
+            ja.JobOpening.PostedAt,
+            ja.JobOpening.ExpiresAt,
             ja.Status, 
             ja.RecruiterRemarks, 
             ja.Applicant.TrackingCode,

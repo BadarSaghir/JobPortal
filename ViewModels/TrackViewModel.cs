@@ -18,6 +18,9 @@ public record ApplicationStatusViewModel(
     Guid ApplicationId,
     string JobTitle,
     DateTimeOffset AppliedAt,
+        DateTimeOffset PublishedDate,
+        DateTimeOffset ExpiredDate,
+
     string Status,
     string? Remarks,
     string TrackingCode,
