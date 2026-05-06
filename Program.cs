@@ -7,9 +7,6 @@ builder.WebHost.UseKestrel(options =>
 {
     options.AddServerHeader = false;
 });
-
-// Or globally suppress all default headers
-
 builder.Services.AddDistributedMemoryCache(); // Required for Session
 builder.Services.AddSession(options =>
 {
@@ -77,13 +74,10 @@ app.MapAreaControllerRoute(
     name: "admin_route",
     areaName: "Admin",
     pattern: "{Admin}/{controller=Dashboard}/{action=Index}/{id?}");
-
 app.MapAreaControllerRoute(
     name: "candidate_route",
     areaName: "Candidate",
     pattern: "{controller=Wizard}/{action=apply}/{id?}");
-
-// 2. Default Public Route
 
 
 app.Run();
