@@ -29,6 +29,11 @@
     height: 1px;
         break-before: always;
 }
+            .pagebreakavoid{
+    min-height: 1px;
+        break-before: avoid;
+}
+   
             .print-wrapper { 
                 display: block !important; 
                 width: 100%; 
@@ -148,20 +153,20 @@
                         </div>
 
                         <!-- I. IDENTIFICATION -->
-                        <div class="p-section-head">I. Identification Protocol</div>
-                        <table>
+                        <div class="p-section-head pagebreakavoid">I. Identification Protocol</div>
+                        <table class="pagebreakavoid">
                             <tr><td width="20%"><strong>Candidate Name</strong></td><td width="30%">@Val(app.Dossier.FullName)</td><td width="20%"><strong>CNIC Number</strong></td><td width="30%">@Val(app.Dossier.CNIC)</td></tr>
                             <tr><td><strong>Father's Name</strong></td><td>@Val(app.Dossier.Personal.FatherName)</td><td><strong>Father's CNIC</strong></td><td>@Val(app.Dossier.Personal.FatherCNIC)</td></tr>
                             <tr><td><strong>Date of Birth</strong></td><td>@Val(app.Dossier.Personal.DOB.ToString("dd-MMM-yyyy"))</td><td><strong>Gender/Marital</strong></td><td>@Val(app.Dossier.Personal.Gender) / @Val(app.Dossier.Personal.MaritalStatus)</td></tr>
                             <tr><td><strong>Contact Ref.</strong></td><td>@Val(app.Dossier.Personal.ContactNo)</td><td><strong>Email Address</strong></td><td>@Val(app.Dossier.Personal.Email)</td></tr>
-                            <tr><td><strong>Religion/Caste</strong></td><td>@Val(app.Dossier.Personal.Religion) (@Val(app.Dossier.Personal.Caste))</td><td><strong>PEC Registration</strong></td><td>@Val(app.Dossier.Personal.PEC)</td></tr>
+                            <tr><td><strong>Religion/Caste</strong></td><td>@Val(app.Dossier.Personal.Religion)- @Val(app.Dossier.Personal.Caste)</td><td><strong>PEC Registration</strong></td><td>@Val(app.Dossier.Personal.PEC)</td></tr>
                             <tr><td colspan="4"><strong>Residency (Present):</strong> @Val(app.Dossier.Personal.PresentAddress)</td></tr>
                             <tr><td colspan="4"><strong>Residency (Permanent):</strong> @Val(app.Dossier.Personal.PermanentAddress)</td></tr>
                         </table>
 
                         <!-- II. ACADEMIC CREDENTIALS -->
-                        <div class="p-section-head">II. Academic Credentials</div>
-                        <table>
+                        <div class="p-section-head pagebreakavoid">II. Academic Credentials</div>
+                        <table class="pagebreakavoid">
                             <tr align="center" style="font-weight:bold; background:#f1f5f9;">
                                 <td width="25%">Degree/Level</td><td width="35%">Institution / University</td><td width="20%">Passing Year</td><td width="20%">Score/CGPA</td>
                             </tr>
@@ -172,8 +177,8 @@
                         </table>
 
                         <!-- III. PROFESSIONAL TENURE -->
-                        <div class="p-section-head">III. Professional Tenure</div>
-                        <table>
+                        <div class="p-section-head pagebreakavoid">III. Professional Tenure</div>
+                        <table class="pagebreakavoid">
                             <tr align="center" style="font-weight:bold; background:#f1f5f9;">
                                 <td width="30%">Organization</td><td width="25%">Designation</td><td width="25%">Tenure Period</td><td width="20%">Responsibilities</td>
                             </tr>
@@ -188,8 +193,8 @@
                         </table>
 <div class="break-after-all pagebreak"></div>
                         <!-- IV. TECHNICAL CAPABILITIES & AFFILIATIONS -->
-                        <div class="p-section-head">IV. Technical Capabilities & Affiliations</div>
-                        <table>
+                        <div class="p-section-head pagebreakavoid">IV. Technical Capabilities & Affiliations</div>
+                        <table class="pagebreakavoid">
                             <tr><td width="25%"><strong>Technical Skills</strong></td><td colspan="3">@string.Join(", ", app.Dossier.Skills.Select(x => $"{x.Name}"))</td></tr>
                             <tr><td><strong>Certifications</strong></td><td colspan="3">@string.Join(", ", app.Dossier.Certifications.Select(x => x.Name))</td></tr>
                             @* <tr>
@@ -203,8 +208,8 @@
                         </table>
 
                         <!-- V. ACHIEVEMENTS -->
-                        <div class="p-section-head">V. Accomplishments & Commendations</div>
-                        <div style="border:1px solid #000; padding:12px; min-height:80px; font-size:9pt;">
+                        <div class="p-section-head pagebreakavoid">V. Accomplishments & Commendations</div>
+                        <div class="pagebreakavoid" style="border:1px solid #000; padding:12px; min-height:80px; font-size:9pt;">
                             @string.Join(" | ", app.Dossier.Achievements.Select(x => x.Title))
                         </div>
 
