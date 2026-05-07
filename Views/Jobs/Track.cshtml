@@ -122,6 +122,8 @@
                                 <div class="flex items-center gap-4 mb-4">
                                     <span class="text-xs font-bold text-slate-400 font-mono">REF: @app.TrackingCode</span>
                                     <span class="status-pill status-@app.Status.ToLower()">@app.Status</span>
+                                  @if(!string.IsNullOrWhiteSpace(app.Remarks)) { <span class="text-xs font-bold text-slate-400 font-mono">Remarks: @app.Remarks</span>
+}
                                 </div>
                                 
                                 <h2 class="text-2xl font-black text-slate-900 mb-6">@app.JobTitle</h2>
@@ -177,7 +179,7 @@
                             <p style="font-size: 16pt; margin-bottom: 5px;"><strong>@app.Dossier.FullName</strong></p>
                             <p style="font-size: 12pt; color: #333;">Application for the position of: <strong>@app.JobTitle</strong></p>
                             <p style="font-size: 10pt; font-family: monospace;">Tracking ID: @app.TrackingCode</p>
-                     @if (string.IsNullOrWhiteSpace(app.Remarks)){   
+                     @if (!string.IsNullOrWhiteSpace(app.Remarks)){   
                          <p style="font-size: 10pt; font-family: monospace;">status: @app.Status</p>
                          <p style="font-size: 10pt; font-family: monospace;">Remarks: @app.Remarks</p>
                          } 
