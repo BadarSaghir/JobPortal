@@ -177,7 +177,10 @@
                             <p style="font-size: 16pt; margin-bottom: 5px;"><strong>@app.Dossier.FullName</strong></p>
                             <p style="font-size: 12pt; color: #333;">Application for the position of: <strong>@app.JobTitle</strong></p>
                             <p style="font-size: 10pt; font-family: monospace;">Tracking ID: @app.TrackingCode</p>
-                            @* <p style="font-size: 10pt; font-family: monospace;">Applicant ID: @app.ApplicationId</p> *@
+                     @if (string.IsNullOrWhiteSpace(app.Remarks)){   
+                         <p style="font-size: 10pt; font-family: monospace;">status: @app.Status</p>
+                         <p style="font-size: 10pt; font-family: monospace;">Remarks: @app.Remarks</p>
+                         } 
                         </div>
 
                         <div class="section-title">Personal Details</div>

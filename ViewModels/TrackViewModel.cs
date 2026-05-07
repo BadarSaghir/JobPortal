@@ -24,6 +24,7 @@ public record ApplicationStatusViewModel(
     string Status,
     string? Remarks,
     string TrackingCode,
+
     bool IsExpired,
     ApplicantDossierViewModel Dossier
 );
