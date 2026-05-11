@@ -24,6 +24,8 @@ public class GetApplicationReviewHandler(AppDbContext context) : QueryHandlerAsy
             .Include(a => a.Applicant).ThenInclude(x => x.Siblings)
             .Include(a => a.Applicant).ThenInclude(x => x.InternalRelatives)
             .Include(a => a.Applicant).ThenInclude(x => x.Certifications)
+            .Include(a => a.Applicant).ThenInclude(x => x.Documents)
+            
             .FirstOrDefaultAsync(a => a.Id == query.Id, ct);
 
         if (app == null) return null;
