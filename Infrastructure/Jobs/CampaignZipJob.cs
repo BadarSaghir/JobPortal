@@ -1,394 +1,3 @@
-// using System.IO.Compression;
-// using System.Text;
-// using ClosedXML.Excel;
-// using Microsoft.EntityFrameworkCore;
-// using Career635.Infrastructure.Persistence;
-// using Career635.Domain.Entities.Jobs;
-// using Quartz;
-//
-// namespace Career635.Infrastructure.Jobs;
-//
-// public class CampaignZipJob(
-//     AppDbContext context, 
-//     IConfiguration config, 
-//     IWebHostEnvironment env,
-//     ILogger<CampaignZipJob> logger) : IJob
-// {
-//
-//  public async Task Execute(IJobExecutionContext contextJob)
-//     {
-//         var taskIdStr = contextJob.MergedJobDataMap.GetString("TaskId");
-//         if (!Guid.TryParse(taskIdStr, out var taskId)) return;
-//
-//         var task = await context.Set<CampaignExportTask>()
-//             .Include(t => t.Campaign)
-//             .FirstOrDefaultAsync(x => x.Id == taskId);
-//
-//         if (task == null) return;
-//
-//         string storageRoot = config.GetValue<string>("StorageSettings:DocumentRoot") ?? "uploads";
-//
-//         // Unique temp workspace for this specific export
-//         string tempRoot = Path.Combine(storageRoot, "temp_exports", taskId.ToString());
-//
-//         try
-//         {
-//             task.Status = "Processing";
-//             await context.SaveChangesAsync();
-//
-//             if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
-//
-//             Directory.CreateDirectory(tempRoot);
-//
-//   var jobsInCampaign = await context.JobOpenings
-//                 .AsNoTracking()
-//                 .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.PersonalInfo)
-//                            .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.FamilySummary)
-//
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.FinancialDetail)
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.MilitaryDetail)
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Educations)
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Experiences)
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Siblings)
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.InternalRelatives)
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Skills)
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Certifications)
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Achievements)
-//             .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Documents)
-//                 .Where(j => j.CampaignId == task.CampaignId)
-//                 .ToListAsync();
-//
-//             // 2. Resolve Server Storage Root
-//             string baseStoragePath = storageRoot.StartsWith("wwwroot") 
-//                 ? Path.Combine(env.ContentRootPath, storageRoot) 
-//                 : storageRoot;
-//
-//             // 3. ORGANIZE PHYSICAL FILES INTO TEMP STRUCTURE
-//             foreach (var job in jobsInCampaign)
-//             {
-//                 // Folder 1: Job Title [JobId]
-//                 string jobFolderName = Sanitize($"{job.Title}_{job.Id.ToString()[..8]}");
-//                 string jobPath = Path.Combine(tempRoot, jobFolderName);
-//                 Directory.CreateDirectory(jobPath);
-//
-//                 foreach (var app in job.JobApplications)
-//                 {
-//                     // Folder 2: Applicant Name [CNIC]
-//                     string applicantFolderName = Sanitize($"{app.Applicant.FullName}_{app.Applicant.CNICNumber}");
-//                     string applicantPath = Path.Combine(jobPath, applicantFolderName);
-//
-//                     // Folder 3: Categorized Subfolders
-//                     string profilePath = Path.Combine(applicantPath, "Profile_Photo");
-//                     string cvPath = Path.Combine(applicantPath, "CV_Portfolio");
-//                     string docsPath = Path.Combine(applicantPath, "Supporting_Documents");
-//
-//                     Directory.CreateDirectory(profilePath);
-//                     Directory.CreateDirectory(cvPath);
-//                     Directory.CreateDirectory(docsPath);
-//
-//                     // A. Copy Passport Image
-//                     await SafeCopy(baseStoragePath, app.Applicant.PassportImageUrl, profilePath, "Passport_Photo");
-//
-//                     // B. Copy Main CV
-//                     await SafeCopy(baseStoragePath, app.Applicant.CvUrl, cvPath, "Main_CV");
-//
-//                     // C. Copy All Other Documents (Grouped by DocumentType)
-//                     foreach (var doc in app.Applicant.Documents)
-//                     {
-//                         string typeFolder = Path.Combine(docsPath, Sanitize(doc.DocumentType));
-//                         if (!Directory.Exists(typeFolder)) Directory.CreateDirectory(typeFolder);
-//                         await SafeCopy(baseStoragePath, doc.FileUrl, typeFolder, "Document");
-//                     }
-//                 }
-//             }
-//
-//             // 4. GENERATE EXCEL (Placed at the root of the ZIP)
-//             string excelName = $"Campaign_Registry_{task.Campaign?.CampaignCode ?? "Default"}.xlsx";
-//             await GenerateMasterExcelAsync(jobsInCampaign.SelectMany(x => x.JobApplications).ToList(), Path.Combine(tempRoot, excelName));
-//
-//             // 5. FINALIZE ZIP
-//             string exportDir = Path.Combine(baseStoragePath, "exports");
-//             if (!Directory.Exists(exportDir)) Directory.CreateDirectory(exportDir);
-//
-//             string zipFileName = $"{task.Campaign?.CampaignCode ?? "Default"}_Full_Candidates_.zip";
-//             string finalZipPath = Path.Combine(exportDir, zipFileName);
-//
-//             if (File.Exists(finalZipPath)) File.Delete(finalZipPath);
-//             ZipFile.CreateFromDirectory(tempRoot, finalZipPath);
-//
-//             task.Status = "Completed";
-//             task.DownloadUrl = $"/uploads/exports/{zipFileName}";
-//             task.ProcessedAt = DateTime.UtcNow;
-//         }
-//         catch (Exception ex)
-//         {
-//             logger.LogError(ex, "Export Error on Task {TaskId}", taskId);
-//             task.Status = "Failed";
-//             task.ErrorMessage = ex.Message;
-//         }
-//         finally
-//         {
-//             if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
-//         }
-//
-//         await context.SaveChangesAsync();
-//     }
-//
-//     private async Task SafeCopy(string baseRoot, string? relativePath, string targetDir, string fileNamePrefix)
-//     {
-//         if (string.IsNullOrEmpty(relativePath)) return;
-//
-//         // Clean relative path of leading slashes
-//         string cleanRelative = relativePath.Replace("\\", "/").TrimStart('/');
-//         string source = Path.GetFullPath(Path.Combine(baseRoot, cleanRelative));
-//
-//         if (File.Exists(source))
-//         {
-//             string ext = Path.GetExtension(source);
-//             string dest = Path.Combine(targetDir, $"{fileNamePrefix}{ext}");
-//
-//             // Handle multiple files of same type (e.g. 2 degrees)
-//             int count = 1;
-//             while(File.Exists(dest)) dest = Path.Combine(targetDir, $"{fileNamePrefix}_{count++}{ext}");
-//
-//             await Task.Run(() => File.Copy(source, dest, true));
-//         }
-//     }
-//
-//     private string Sanitize(string name)
-//     {
-//         // Remove invalid folder characters
-//         char[] invalid = Path.GetInvalidFileNameChars();
-//         foreach (char c in invalid) name = name.Replace(c, '_');
-//         return name.Replace(" ", "_");
-//     }
-//     private async Task GenerateMasterExcelAsync(List<JobApplication>  applications, string filePath)
-//     {
-//         // Fetch ALL data with exhaustive Includes
-//
-//
-//         using var workbook = new XLWorkbook();
-//
-//         // --- SHEET 1: MASTER BIO-DATA (EXHAUSTIVE) ---
-//         var wsMaster = workbook.Worksheets.Add("Master Registry");
-//
-//
-//
-//         var headers = new[] { 
-//             "Tracking ID", 
-//             "Job Applied For", 
-//             "Current Status", "Applied At",
-//             "Full Name", "CNIC Number", "Father Name", "Father CNIC", "DOB", "Gender", 
-//             "Marital Status", "Religion", "Caste", "Sect", "Contact No", "Email", "PEC No",
-//             "Present Address", "Permanent Address", "Army No", "Army Unit", "Army Character", "Army Scale",
-//             "Current Salary", "Expected Salary", "Family Income Detail", "Total Brothers", "Total Sisters", "Total Children", "CandiaiteType", "Accommodation","SistersMarried","BrothersMarried","ChildrenMarried","SistersUnMarried","BrothersUnMarried","ChildrenUnMarried","JobId","JobName","CV","Photo","ApplicantId"
-//         };
-//         for (int i = 0; i < headers.Length; i++) wsMaster.Cell(1, i + 1).Value = headers[i];
-//
-//         for (int i = 0; i < applications.Count; i++)
-//         {
-//             var app = applications[i];
-//             var r = i + 2;
-//             var a = app.Applicant;
-//             var p = a.PersonalInfo;
-//             var m = a.MilitaryDetail;
-//             var f = a.FinancialDetail;
-//             var fs = a.FamilySummary;
-//
-//             wsMaster.Cell(r, 1).Value = a.TrackingCode;
-//             wsMaster.Cell(r, 2).Value = app.JobOpening.Title;
-//             wsMaster.Cell(r, 3).Value = app.Status;
-//             wsMaster.Cell(r, 4).Value = app.AppliedAt.DateTime;
-//             wsMaster.Cell(r, 5).Value = a.FullName;
-//             wsMaster.Cell(r, 6).Value = a.CNICNumber;
-//             wsMaster.Cell(r, 7).Value = p?.FatherName;
-//             wsMaster.Cell(r, 8).Value = p?.FatherCNIC;
-//             wsMaster.Cell(r, 9).Value = p?.DateOfBirth;
-//             wsMaster.Cell(r, 10).Value = p?.Gender;
-//             wsMaster.Cell(r, 11).Value = p?.MaritalStatus;
-//             wsMaster.Cell(r, 12).Value = p?.Religion;
-//             wsMaster.Cell(r, 13).Value = p?.Caste;
-//             wsMaster.Cell(r, 14).Value = p?.Sect;
-//             wsMaster.Cell(r, 15).Value = p?.ContactNo;
-//             wsMaster.Cell(r, 16).Value = p?.Email;
-//             wsMaster.Cell(r, 17).Value = p?.PECNumber;
-//             wsMaster.Cell(r, 18).Value = p?.PresentAddress;
-//             wsMaster.Cell(r, 19).Value = p?.PermanentAddress;
-//             wsMaster.Cell(r, 20).Value = m?.ArmyNumber;
-//             wsMaster.Cell(r, 21).Value = m?.ArmyUnit;
-//             wsMaster.Cell(r, 22).Value = m?.ArmyCharacter;
-//             wsMaster.Cell(r, 23).Value = m?.ArmyPayScale;
-//             wsMaster.Cell(r, 24).Value = f?.CurrentSalary +",\nBenefits: "+ f?.OtherBenefits +",\nFacitlites "+f?.OtherFacilities;
-//             wsMaster.Cell(r, 25).Value = f?.ExpectedSalary;
-//             wsMaster.Cell(r, 26).Value = f?.FamilyIncomeDetail;
-//
-//
-//             wsMaster.Cell(r, 27).Value = fs?.BrothersTotal;
-//             wsMaster.Cell(r, 28).Value = fs?.SistersTotal;
-//             wsMaster.Cell(r, 29).Value = fs?.ChildrenTotal;
-//             wsMaster.Cell(r, 30).Value = p?.CandidateType;
-//              wsMaster.Cell(r, 31).Value = p?.Accommodation;
-//
-//             wsMaster.Cell(r, 32).Value = fs?.SistersMarried;
-//             wsMaster.Cell(r, 33).Value = fs?.BrothersMarried;
-//             wsMaster.Cell(r, 34).Value = fs?.ChildrenMarried;
-//
-//             wsMaster.Cell(r, 35).Value = fs?.SistersUnmarried; //SistersMarried;
-//             wsMaster.Cell(r, 36).Value = fs?.BrothersUnmarried;
-//             wsMaster.Cell(r, 37).Value = fs?.ChildrenUnmarried;
-//             wsMaster.Cell(r, 38).Value = app.JobOpeningId.ToString();
-//             wsMaster.Cell(r, 39).Value = app.JobOpening.Title.ToString();
-//             wsMaster.Cell(r, 40).Value = app.Applicant?.CvUrl?.ToString()??"N/A";
-//             wsMaster.Cell(r, 41).Value = app.Applicant?.PassportImageUrl?.ToString()??"N/A";
-//             wsMaster.Cell(r, 42).Value = app.ApplicantId.ToString()??"N/A";
-//
-//
-//
-//         }
-//
-//         // --- SHEET 2: EDUCATION ---
-//         var wsEdu = workbook.Worksheets.Add("Education");
-//         wsEdu.Cell(1, 1).Value = "CNIC"; wsEdu.Cell(1, 2).Value = "Level"; wsEdu.Cell(1, 3).Value = "Qualification"; wsEdu.Cell(1, 4).Value = "Institution";
-//          wsEdu.Cell(1, 5).Value = "Result";
-//          wsEdu.Cell(1, 6).Value = "ApplicantId";
-//         int eduRow = 2;
-//         foreach(var app in applications) {
-//             foreach(var e in app.Applicant.Educations) {
-//                 wsEdu.Cell(eduRow, 1).Value = app.Applicant.CNICNumber;
-//                 wsEdu.Cell(eduRow, 3).Value = e.Qualification;
-//                 wsEdu.Cell(eduRow, 4).Value = e.BoardUniversity;
-//                 wsEdu.Cell(eduRow, 5).Value = e.CgpaPercentage;
-//                 wsEdu.Cell(eduRow, 6).Value = app.ApplicantId.ToString()??"N/A";
-//
-//                 eduRow++;
-//             }
-//         }
-//
-//         // --- SHEET 3: EXPERIENCE ---
-//         var wsExp = workbook.Worksheets.Add("Experience");
-//         wsExp.Cell(1, 1).Value = "CNIC"; wsExp.Cell(1, 2).Value = "Organization"; wsExp.Cell(1, 3).Value = "Designation"; wsExp.Cell(1, 4).Value = "From";
-//          wsExp.Cell(1, 5).Value = "To";
-//          wsExp.Cell(1, 6).Value = "Key Responsibilities";
-//          wsExp.Cell(1, 7).Value = "ApplicantId";
-//         int expRow = 2;
-//         foreach(var app in applications) {
-//             foreach(var ex in app.Applicant.Experiences) {
-//                 wsExp.Cell(expRow, 1).Value = app.Applicant.CNICNumber;
-//                 wsExp.Cell(expRow, 2).Value = ex.OrganizationName;
-//                 wsExp.Cell(expRow, 3).Value = ex.Designation;
-//                 wsExp.Cell(expRow, 4).Value = ex.FromDate;
-//                 wsExp.Cell(expRow, 5).Value = ex.ToDate;
-//                 wsExp.Cell(expRow, 6).Value = ex.KeyResponsibilities;
-//                 wsExp.Cell(expRow, 7).Value = app.ApplicantId.ToString()??"N/A";
-//                 expRow++;
-//             }
-//         }
-//
-//         // --- SHEET 4: SIBLINGS ---
-//         var wsSib = workbook.Worksheets.Add("Siblings");
-//         wsSib.Cell(1, 1).Value = "Applicant CNIC"; 
-//         wsSib.Cell(1, 2).Value = "Sibling Name"; 
-//         wsSib.Cell(1, 3).Value = "Gender"; 
-//         wsSib.Cell(1, 4).Value = "Occupation";
-//         wsSib.Cell(1, 5).Value = "CNIC";
-//         wsSib.Cell(1, 6).Value = "DateOfBirth";
-//         wsSib.Cell(1, 7).Value = "Designation";
-//         wsSib.Cell(1, 8).Value = "Organization";
-//         wsSib.Cell(1, 9).Value = "ApplicantId";
-//
-//         int sibRow = 2;
-//         foreach(var app in applications) {
-//             foreach(var s in app.Applicant.Siblings) {
-//                 wsSib.Cell(sibRow, 1).Value = app.Applicant.CNICNumber;
-//                 wsSib.Cell(sibRow, 2).Value = s.Name;
-//                 wsSib.Cell(sibRow, 3).Value = s.Gender;
-//                 wsSib.Cell(sibRow, 4).Value = s.Occupation;
-//                 wsSib.Cell(sibRow, 5).Value = s.CNIC;
-//                 wsSib.Cell(sibRow, 6).Value = s.DateOfBirth;
-//                 wsSib.Cell(sibRow, 7).Value = s.Designation;
-//                 wsSib.Cell(sibRow, 8).Value = s.Organization;
-//                 wsSib.Cell(sibRow, 9).Value = s.ApplicantId.ToString()??"N/A";
-//
-//                 sibRow++;
-//             }
-//         }
-//
-//         // --- SHEET 5: PROFESSIONAL EXTRAS (Skills/Certs) ---
-//         var wsExtra = workbook.Worksheets.Add("Skills & Certs");
-//         wsExtra.Cell(1, 1).Value = "CNIC"; wsExtra.Cell(1, 2).Value = "Type"; wsExtra.Cell(1, 3).Value = "Name"; 
-//         wsExtra.Cell(1, 4).Value = "Detail";
-//         wsExtra.Cell(1, 5).Value = "ApplicantId";
-//         int exRow = 2;
-//         foreach(var app in applications) {
-//             foreach(var sk in app.Applicant.Skills) {
-//                 wsExtra.Cell(exRow, 1).Value = app.Applicant.CNICNumber; wsExtra.Cell(exRow, 2).Value = "Skill"; wsExtra.Cell(exRow, 3).Value = sk.SkillName; 
-//                 wsExtra.Cell(exRow, 4).Value = sk.Proficiency;
-//                 wsExtra.Cell(exRow, 5).Value = app.ApplicantId.ToString()??"N/A";
-//                 exRow++;
-//             }
-//             foreach(var ct in app.Applicant.Certifications) {
-//                 wsExtra.Cell(exRow, 1).Value = app.Applicant.CNICNumber; wsExtra.Cell(exRow, 2).Value = "Certification"; wsExtra.Cell(exRow, 3).Value = ct.CertificateName; 
-//                 wsExtra.Cell(exRow, 4).Value = ct.IssuingBody;
-//                 wsExtra.Cell(exRow, 5).Value =app.ApplicantId.ToString()??"N/A";
-//                 exRow++;
-//             }
-//         }
-//
-//   var wsRelatives = workbook.Worksheets.Add("Relatives");
-//         wsRelatives.Cell(1, 1).Value = "CNIC Applicant"; 
-//         wsRelatives.Cell(1, 2).Value = "RelativeName"; 
-//         wsRelatives.Cell(1, 3).Value = "Department"; 
-//         wsRelatives.Cell(1, 4).Value = "Designation";
-//         wsRelatives.Cell(1, 5).Value = "PayScale";
-//         wsRelatives.Cell(1, 6).Value = "ApplicantId";
-//         int rlRow = 2;
-//         foreach(var app in applications) {
-//             foreach(var sk in app.Applicant.InternalRelatives) {
-//                 wsRelatives.Cell(rlRow, 1).Value = app.Applicant.CNICNumber; 
-//                 wsRelatives.Cell(rlRow, 2).Value = sk.RelativeName;
-//              wsRelatives.Cell(rlRow, 3).Value = sk.Department; 
-//              wsRelatives.Cell(rlRow, 4).Value = sk.Designation;
-//                 wsRelatives.Cell(rlRow, 5).Value = sk.PayScale;
-//                 wsRelatives.Cell(rlRow, 6).Value = app.ApplicantId.ToString()??"N/A";
-//                 rlRow++;
-//             }
-//
-//         }
-//    var wsDoc = workbook.Worksheets.Add("Documents");
-//         wsDoc.Cell(1, 1).Value = "CNIC"; wsDoc.Cell(1, 2).Value = "DocType";
-//         wsDoc.Cell(1, 3).Value = "Id"; 
-//         wsDoc.Cell(1, 4).Value = "Path";
-//         wsDoc.Cell(1, 5).Value = "ApplicantId";
-//         int wsdocRow = 2;
-//         foreach(var app in applications) {
-//             foreach(var ex in app.Applicant.Documents) {
-//                 wsDoc.Cell(wsdocRow, 1).Value = app.Applicant.CNICNumber;
-//                 wsDoc.Cell(wsdocRow, 2).Value = ex.DocumentType;
-//                 wsDoc.Cell(wsdocRow, 3).Value = ex.Id.ToString();
-//                 wsDoc.Cell(wsdocRow, 4).Value = ex.FileUrl;
-//                 wsDoc.Cell(wsdocRow, 5).Value = app.ApplicantId.ToString()??"N/A";
-//
-//
-//
-//                 wsdocRow++;
-//             }
-//         }
-//
-//         // APPLY CORPORATE STYLING
-//         foreach (var ws in workbook.Worksheets)
-//         {
-//             var range = ws.Range(1, 1, 1, ws.ColumnsUsed().Count());
-//             range.Style.Fill.BackgroundColor = XLColor.FromHtml("#064E3B"); // Emerald 950
-//             range.Style.Font.FontColor = XLColor.White;
-//             range.Style.Font.Bold = true;
-//             ws.Columns().AdjustToContents();
-//             ws.SheetView.FreezeRows(1);
-//         }
-//
-//         workbook.SaveAs(filePath);
-//     }
-// }
-//
 using System.IO.Compression;
 using System.Text;
 using ClosedXML.Excel;
@@ -405,8 +14,7 @@ public class CampaignZipJob(
     IWebHostEnvironment env,
     ILogger<CampaignZipJob> logger) : IJob
 {
-
- public async Task Execute(IJobExecutionContext contextJob)
+    public async Task Execute(IJobExecutionContext contextJob)
     {
         var taskIdStr = contextJob.MergedJobDataMap.GetString("TaskId");
         if (!Guid.TryParse(taskIdStr, out var taskId)) return;
@@ -418,388 +26,587 @@ public class CampaignZipJob(
         if (task == null) return;
 
         string storageRoot = config.GetValue<string>("StorageSettings:DocumentRoot") ?? "uploads";
-
-        // Unique temp workspace for this specific export
         string tempRoot = Path.Combine(storageRoot, "temp_exports", taskId.ToString());
 
         try
         {
             task.Status = "Processing";
+            task.ProcessedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
 
-            if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
-
+            // Clean up any existing temp directory
+            if (Directory.Exists(tempRoot)) 
+            {
+                try { Directory.Delete(tempRoot, true); }
+                catch { /* Ignore cleanup errors */ }
+            }
             Directory.CreateDirectory(tempRoot);
 
-            // FIX: Load data in batches to prevent memory issues
-            var allApplications = new List<JobApplication>();
-            var jobsInCampaign = new List<JobOpening>();
-            
-            // Get total count for progress tracking
-            var totalJobs = await context.JobOpenings
-                .Where(j => j.CampaignId == task.CampaignId)
-                .CountAsync();
-            
-            // Process jobs in batches of 50 to avoid memory overload
-            int skip = 0;
-            int batchSize = 50;
-            
-            while (skip < totalJobs)
-            {
-                var jobsBatch = await context.JobOpenings
-                    .AsNoTracking()
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.PersonalInfo)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.FamilySummary)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.FinancialDetail)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.MilitaryDetail)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Educations)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Experiences)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Siblings)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.InternalRelatives)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Skills)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Certifications)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Achievements)
-                    .Include(j => j.JobApplications).ThenInclude(a => a.Applicant).ThenInclude(x => x.Documents)
-                    .Where(j => j.CampaignId == task.CampaignId)
-                    .Skip(skip)
-                    .Take(batchSize)
-                    .ToListAsync();
-                
-                foreach (var job in jobsBatch)
-                {
-                    jobsInCampaign.Add(job);
-                    allApplications.AddRange(job.JobApplications);
-                }
-                
-                skip += batchSize;
-                
-                // Update progress
-                task.Status = $"Processing {skip}/{totalJobs} jobs";
-                await context.SaveChangesAsync();
-            }
-
-            // Resolve Server Storage Root
             string baseStoragePath = storageRoot.StartsWith("wwwroot") 
                 ? Path.Combine(env.ContentRootPath, storageRoot) 
                 : storageRoot;
 
-            // ORGANIZE PHYSICAL FILES INTO TEMP STRUCTURE
-            foreach (var job in jobsInCampaign)
-            {
-                // Folder 1: Job Title [JobId]
-                string jobFolderName = Sanitize($"{job.Title}_{job.Id.ToString()[..8]}");
-                string jobPath = Path.Combine(tempRoot, jobFolderName);
-                Directory.CreateDirectory(jobPath);
+            // Get total counts for progress tracking
+            var totalJobs = await context.JobOpenings
+                .Where(j => j.CampaignId == task.CampaignId)
+                .CountAsync();
 
-                foreach (var app in job.JobApplications)
-                {
-                    // Folder 2: Applicant Name [CNIC]
-                    string applicantFolderName = Sanitize($"{app.Applicant.FullName}_{app.Applicant.CNICNumber}");
-                    string applicantPath = Path.Combine(jobPath, applicantFolderName);
-                    
-                    // Folder 3: Categorized Subfolders
-                    string profilePath = Path.Combine(applicantPath, "Profile_Photo");
-                    string cvPath = Path.Combine(applicantPath, "CV_Portfolio");
-                    string docsPath = Path.Combine(applicantPath, "Supporting_Documents");
+            var totalApplicants = await context.JobApplications
+                .Include(a => a.JobOpening)
+                .Where(a => a.JobOpening.CampaignId == task.CampaignId)
+                .CountAsync();
 
-                    Directory.CreateDirectory(profilePath);
-                    Directory.CreateDirectory(cvPath);
-                    Directory.CreateDirectory(docsPath);
+            // task.TotalRecords = totalApplicants;
+            await context.SaveChangesAsync();
 
-                    // A. Copy Passport Image
-                    await SafeCopy(baseStoragePath, app.Applicant.PassportImageUrl, profilePath, "Passport_Photo");
+            // Process everything
+            string excelPath = Path.Combine(tempRoot, $"Campaign_Registry_{task.Campaign?.CampaignCode ?? "Default"}.xlsx");
+            
+            await ProcessExportAsync(task, tempRoot, excelPath, baseStoragePath, totalJobs, totalApplicants);
 
-                    // B. Copy Main CV
-                    await SafeCopy(baseStoragePath, app.Applicant.CvUrl, cvPath, "Main_CV");
-
-                    // C. Copy All Other Documents (Grouped by DocumentType)
-                    foreach (var doc in app.Applicant.Documents)
-                    {
-                        string typeFolder = Path.Combine(docsPath, Sanitize(doc.DocumentType));
-                        if (!Directory.Exists(typeFolder)) Directory.CreateDirectory(typeFolder);
-                        await SafeCopy(baseStoragePath, doc.FileUrl, typeFolder, "Document");
-                    }
-                }
-            }
-
-            // GENERATE EXCEL (Placed at the root of the ZIP)
-            string excelName = $"Campaign_Registry_{task.Campaign?.CampaignCode ?? "Default"}.xlsx";
-            await GenerateMasterExcelAsync(allApplications, Path.Combine(tempRoot, excelName));
-
-            // FINALIZE ZIP
+            // Create final ZIP file
             string exportDir = Path.Combine(baseStoragePath, "exports");
             if (!Directory.Exists(exportDir)) Directory.CreateDirectory(exportDir);
 
-            string zipFileName = $"{task.Campaign?.CampaignCode ?? "Default"}_Full_Candidates_.zip";
+            string zipFileName = $"{task.Campaign?.CampaignCode ?? "Default"}_Full_Candidates_{DateTime.Now:yyyyMMddHHmmss}.zip";
             string finalZipPath = Path.Combine(exportDir, zipFileName);
 
             if (File.Exists(finalZipPath)) File.Delete(finalZipPath);
-            ZipFile.CreateFromDirectory(tempRoot, finalZipPath);
+            
+            // Create ZIP with optimized settings
+            ZipFile.CreateFromDirectory(tempRoot, finalZipPath, CompressionLevel.Optimal, false);
 
             task.Status = "Completed";
             task.DownloadUrl = $"/uploads/exports/{zipFileName}";
             task.ProcessedAt = DateTime.UtcNow;
+            // task.CompletedAt = DateTime.UtcNow;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Export Error on Task {TaskId}", taskId);
             task.Status = "Failed";
             task.ErrorMessage = ex.Message;
+            task.ProcessedAt = DateTime.UtcNow;
         }
         finally
         {
-            if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
+            // Clean up temp directory
+            if (Directory.Exists(tempRoot)) 
+            {
+                try 
+                { 
+                    Directory.Delete(tempRoot, true); 
+                    logger.LogInformation("Cleaned up temp directory for task {TaskId}", taskId);
+                }
+                catch (Exception ex) 
+                { 
+                    logger.LogWarning(ex, "Failed to cleanup temp directory for task {TaskId}", taskId);
+                }
+            }
         }
 
         await context.SaveChangesAsync();
     }
 
-    private async Task SafeCopy(string baseRoot, string? relativePath, string targetDir, string fileNamePrefix)
+    private async Task ProcessExportAsync(CampaignExportTask task, string tempRoot, string excelPath, 
+        string baseStoragePath, int totalJobs, int totalApplicants)
+    {
+        int batchSize = config.GetValue<int>("ExportSettings:BatchSize", 25);
+        int skip = 0;
+        int processedApplicants = 0;
+        int processedJobs = 0;
+
+        // Create Excel workbook with streaming approach
+        using (var workbook = new XLWorkbook())
+        {
+            // Create all worksheets
+            var wsMaster = workbook.Worksheets.Add("Master Registry");
+            var wsEdu = workbook.Worksheets.Add("Education");
+            var wsExp = workbook.Worksheets.Add("Experience");
+            var wsSib = workbook.Worksheets.Add("Siblings");
+            var wsExtra = workbook.Worksheets.Add("Skills_Certs");
+            var wsRelatives = workbook.Worksheets.Add("Relatives");
+            var wsDoc = workbook.Worksheets.Add("Documents");
+            var wsAchievements = workbook.Worksheets.Add("Achievements");
+
+            // Add headers to all worksheets
+            AddMasterHeaders(wsMaster);
+            AddSimpleHeaders(wsEdu, new[] { "CNIC", "Level", "Qualification", "Institution", "Result","From", "To", "ApplicantId" });
+            AddSimpleHeaders(wsExp, new[] { "CNIC", "Organization", "Designation", "From", "To", "KeyResponsibilities", "ApplicantId" });
+            AddSimpleHeaders(wsSib, new[] { "CNIC", "Name", "Gender", "Occupation", "SiblingCNIC", "DateOfBirth", "Designation", "Organization", "ApplicantId" });
+            AddSimpleHeaders(wsExtra, new[] { "CNIC", "Type", "Name", "Detail", "ApplicantId" });
+            AddSimpleHeaders(wsRelatives, new[] { "CNIC", "RelativeName", "Department", "Designation", "PayScale", "ApplicantId" });
+            AddSimpleHeaders(wsDoc, new[] { "CNIC", "DocType", "FileUrl", "ApplicantId" });
+            AddSimpleHeaders(wsAchievements, new[] { "CNIC", "Achievement", "Organization", "Year", "ApplicantId" });
+
+            int masterRow = 2, eduRow = 2, expRow = 2, sibRow = 2, extraRow = 2, relRow = 2, docRow = 2, achRow = 2;
+
+            // Process jobs in batches
+            while (skip < totalJobs)
+            {
+                var jobsBatch = await context.JobOpenings
+                    .AsNoTracking()
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.PersonalInfo)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.FamilySummary)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.MilitaryDetail)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.FinancialDetail)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.Educations)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.Experiences)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.Siblings)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.Skills)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.Certifications)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.Achievements)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.InternalRelatives)
+                    .Include(j => j.JobApplications)
+                        .ThenInclude(a => a.Applicant)
+                            .ThenInclude(x => x.Documents)
+                    .Where(j => j.CampaignId == task.CampaignId)
+                    .OrderBy(j => j.Id)
+                    .Skip(skip)
+                    .Take(batchSize)
+                    .ToListAsync();
+
+                if (!jobsBatch.Any()) break;
+
+                foreach (var job in jobsBatch)
+                {
+                    processedJobs++;
+                    
+                    // Update progress
+                    if (processedJobs % 5 == 0)
+                    {
+                        task.Status = $"Processing job {processedJobs}/{totalJobs}...";
+                        // task.ProcessedAt = processedApplicants;
+                        await context.SaveChangesAsync();
+                    }
+
+                    // Copy files for this job's applicants
+                    await CopyFilesForJobAsync(job, tempRoot, baseStoragePath);
+                    
+                    // Write to Excel worksheets
+                    foreach (var app in job.JobApplications)
+                    {
+                        processedApplicants++;
+                        
+                        WriteMasterRecord(wsMaster, masterRow++, app);
+                        WriteEducationRecords(wsEdu, ref eduRow, app);
+                        WriteExperienceRecords(wsExp, ref expRow, app);
+                        WriteSiblingRecords(wsSib, ref sibRow, app);
+                        WriteSkillCertRecords(wsExtra, ref extraRow, app);
+                        WriteRelativeRecords(wsRelatives, ref relRow, app);
+                        WriteDocumentRecords(wsDoc, ref docRow, app);
+                        WriteAchievementRecords(wsAchievements, ref achRow, app);
+                        
+                        // Periodic save to release memory
+                        if (processedApplicants % 500 == 0)
+                        {
+                            workbook.SaveAs(excelPath + ".tmp");
+                            task.Status = $"Processed {processedApplicants}/{totalApplicants} applicants, saving...";
+                            await context.SaveChangesAsync();
+                            
+                            // Force garbage collection
+                            GC.Collect();
+                            GC.WaitForPendingFinalizers();
+                        }
+                    }
+                }
+
+                skip += batchSize;
+                
+                // Clear tracking and force GC every few batches
+                if (skip % (batchSize * 10) == 0)
+                {
+                    context.ChangeTracker.Clear();
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+            }
+
+            // Apply final formatting
+            foreach (var ws in workbook.Worksheets)
+            {
+                ws.Columns().AdjustToContents();
+                ws.SheetView.FreezeRows(1);
+                
+                // Apply header styling
+                var headerRange = ws.Range(1, 1, 1, ws.ColumnsUsed().Count());
+                headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#064E3B");
+                headerRange.Style.Font.FontColor = XLColor.White;
+                headerRange.Style.Font.Bold = true;
+            }
+
+            // Save final Excel file
+            workbook.SaveAs(excelPath);
+            
+            // Clean up temp file if exists
+            if (File.Exists(excelPath + ".tmp"))
+                File.Delete(excelPath + ".tmp");
+        }
+    }
+
+    private void AddMasterHeaders(IXLWorksheet ws)
+    {
+        var headers = new[] 
+        { 
+            "Tracking ID", "Job Applied For", "Current Status", "Applied At",
+            "Full Name", "CNIC Number", "Father Name", "Father CNIC", "DOB", "Gender", 
+            "Marital Status", "Religion", "Caste", "Sect", "Contact No", "Email", "PEC No",
+            "Present Address", "Permanent Address", "Army No", "Army Unit", "Army Character", 
+            "Army Scale", "Current Salary", "Other Benefits", "Other Facilities", "Expected Salary", 
+            "Family Income Detail", "Total Brothers", "Total Sisters", "Total Children", 
+            "Candidate Type", "Accommodation", "Sisters Married", "Brothers Married", 
+            "Children Married", "Sisters Unmarried", "Brothers Unmarried", "Children Unmarried",
+            "JobId", "JobName", "CV Path", "Photo Path", "ApplicantId"
+        };
+
+        for (int i = 0; i < headers.Length; i++)
+            ws.Cell(1, i + 1).Value = headers[i];
+    }
+
+    private void AddSimpleHeaders(IXLWorksheet ws, string[] headers)
+    {
+        for (int i = 0; i < headers.Length; i++)
+            ws.Cell(1, i + 1).Value = headers[i];
+    }
+
+    private void WriteMasterRecord(IXLWorksheet ws, int row, JobApplication app)
+    {
+        var a = app.Applicant;
+        var p = a.PersonalInfo;
+        var m = a.MilitaryDetail;
+        var f = a.FinancialDetail;
+        var fs = a.FamilySummary;
+
+        ws.Cell(row, 1).Value = a.TrackingCode ?? "N/A";
+        ws.Cell(row, 2).Value = app.JobOpening?.Title ?? "N/A";
+        ws.Cell(row, 3).Value = app.Status ?? "N/A";
+        ws.Cell(row, 4).Value = app.AppliedAt.DateTime;
+        ws.Cell(row, 5).Value = a.FullName ?? "N/A";
+        ws.Cell(row, 6).Value = a.CNICNumber ?? "N/A";
+        ws.Cell(row, 7).Value = p?.FatherName ?? "N/A";
+        ws.Cell(row, 8).Value = p?.FatherCNIC ?? "N/A";
+        ws.Cell(row, 9).Value = p?.DateOfBirth;
+        ws.Cell(row, 10).Value = p?.Gender ?? "N/A";
+        ws.Cell(row, 11).Value = p?.MaritalStatus ?? "N/A";
+        ws.Cell(row, 12).Value = p?.Religion ?? "N/A";
+        ws.Cell(row, 13).Value = p?.Caste ?? "N/A";
+        ws.Cell(row, 14).Value = p?.Sect ?? "N/A";
+        ws.Cell(row, 15).Value = p?.ContactNo ?? "N/A";
+        ws.Cell(row, 16).Value = p?.Email ?? "N/A";
+        ws.Cell(row, 17).Value = p?.PECNumber ?? "N/A";
+        ws.Cell(row, 18).Value = p?.PresentAddress ?? "N/A";
+        ws.Cell(row, 19).Value = p?.PermanentAddress ?? "N/A";
+        ws.Cell(row, 20).Value = m?.ArmyNumber ?? "N/A";
+        ws.Cell(row, 21).Value = m?.ArmyUnit ?? "N/A";
+        ws.Cell(row, 22).Value = m?.ArmyCharacter ?? "N/A";
+        ws.Cell(row, 23).Value = m?.ArmyPayScale ?? "N/A";
+        ws.Cell(row, 24).Value = f?.CurrentSalary.ToString() ?? "N/A";
+        ws.Cell(row, 25).Value = f?.OtherBenefits ?? "N/A";
+        ws.Cell(row, 26).Value = f?.OtherFacilities ?? "N/A";
+        ws.Cell(row, 27).Value = f?.ExpectedSalary.ToString() ?? "N/A";
+        ws.Cell(row, 28).Value = f?.FamilyIncomeDetail ?? "N/A";
+        ws.Cell(row, 29).Value = fs?.BrothersTotal ?? 0;
+        ws.Cell(row, 30).Value = fs?.SistersTotal ?? 0;
+        ws.Cell(row, 31).Value = fs?.ChildrenTotal ?? 0;
+        ws.Cell(row, 32).Value = p?.CandidateType ?? "N/A";
+        ws.Cell(row, 33).Value = p?.Accommodation ?? "N/A";
+        ws.Cell(row, 34).Value = fs?.SistersMarried ?? 0;
+        ws.Cell(row, 35).Value = fs?.BrothersMarried ?? 0;
+        ws.Cell(row, 36).Value = fs?.ChildrenMarried ?? 0;
+        ws.Cell(row, 37).Value = fs?.SistersUnmarried ?? 0;
+        ws.Cell(row, 38).Value = fs?.BrothersUnmarried ?? 0;
+        ws.Cell(row, 39).Value = fs?.ChildrenUnmarried ?? 0;
+        ws.Cell(row, 40).Value = app.JobOpeningId.ToString();
+        ws.Cell(row, 41).Value = app.JobOpening?.Title ?? "N/A";
+        ws.Cell(row, 42).Value = app.Applicant?.CvUrl ?? "N/A";
+        ws.Cell(row, 43).Value = app.Applicant?.PassportImageUrl ?? "N/A";
+        ws.Cell(row, 44).Value = app.ApplicantId.ToString();
+    }
+
+    private void WriteEducationRecords(IXLWorksheet ws, ref int row, JobApplication app)
+    {
+        if (app.Applicant.Educations == null || !app.Applicant.Educations.Any()) return;
+        
+        foreach (var edu in app.Applicant.Educations)
+        {
+            ws.Cell(row, 1).Value = app.Applicant.CNICNumber ?? "N/A";
+            ws.Cell(row, 2).Value = edu.DegreeLevel?.Name ?? "N/A";
+            ws.Cell(row, 3).Value = edu.Qualification ?? "N/A";
+            ws.Cell(row, 4).Value = edu.BoardUniversity ?? "N/A";
+            ws.Cell(row, 5).Value = edu.CgpaPercentage ?? "N/A";
+            ws.Cell(row, 6).Value = edu.FromDate.ToString() ?? "N/A";
+            ws.Cell(row, 7).Value = edu.ToDate.ToString() ?? "N/A";
+            ws.Cell(row, 8).Value = app.ApplicantId.ToString();
+            row++;
+        }
+    }
+
+    private void WriteExperienceRecords(IXLWorksheet ws, ref int row, JobApplication app)
+    {
+        if (app.Applicant.Experiences == null || !app.Applicant.Experiences.Any()) return;
+        
+        foreach (var exp in app.Applicant.Experiences)
+        {
+            ws.Cell(row, 1).Value = app.Applicant.CNICNumber ?? "N/A";
+            ws.Cell(row, 2).Value = exp.OrganizationName ?? "N/A";
+            ws.Cell(row, 3).Value = exp.Designation ?? "N/A";
+            ws.Cell(row, 4).Value = exp.FromDate;
+            ws.Cell(row, 5).Value = exp.ToDate;
+            ws.Cell(row, 6).Value = exp.KeyResponsibilities ?? "N/A";
+            ws.Cell(row, 7).Value = app.ApplicantId.ToString();
+            row++;
+        }
+    }
+
+    private void WriteSiblingRecords(IXLWorksheet ws, ref int row, JobApplication app)
+    {
+        if (app.Applicant.Siblings == null || !app.Applicant.Siblings.Any()) return;
+        
+        foreach (var sibling in app.Applicant.Siblings)
+        {
+            ws.Cell(row, 1).Value = app.Applicant.CNICNumber ?? "N/A";
+            ws.Cell(row, 2).Value = sibling.Name ?? "N/A";
+            ws.Cell(row, 3).Value = sibling.Gender ?? "N/A";
+            ws.Cell(row, 4).Value = sibling.Occupation ?? "N/A";
+            ws.Cell(row, 5).Value = sibling.CNIC ?? "N/A";
+            ws.Cell(row, 6).Value = sibling.DateOfBirth;
+            ws.Cell(row, 7).Value = sibling.Designation ?? "N/A";
+            ws.Cell(row, 8).Value = sibling.Organization ?? "N/A";
+            ws.Cell(row, 9).Value = app.ApplicantId.ToString();
+            row++;
+        }
+    }
+
+    private void WriteSkillCertRecords(IXLWorksheet ws, ref int row, JobApplication app)
+    {
+        // Write Skills
+        if (app.Applicant.Skills != null)
+        {
+            foreach (var skill in app.Applicant.Skills)
+            {
+                ws.Cell(row, 1).Value = app.Applicant.CNICNumber ?? "N/A";
+                ws.Cell(row, 2).Value = "Skill";
+                ws.Cell(row, 3).Value = skill.SkillName ?? "N/A";
+                ws.Cell(row, 4).Value = skill.Proficiency ?? "N/A";
+                ws.Cell(row, 5).Value = app.ApplicantId.ToString();
+                row++;
+            }
+        }
+        
+        // Write Certifications
+        if (app.Applicant.Certifications != null)
+        {
+            foreach (var cert in app.Applicant.Certifications)
+            {
+                ws.Cell(row, 1).Value = app.Applicant.CNICNumber ?? "N/A";
+                ws.Cell(row, 2).Value = "Certification";
+                ws.Cell(row, 3).Value = cert.CertificateName ?? "N/A";
+                ws.Cell(row, 4).Value = cert.IssuingBody ?? "N/A";
+                ws.Cell(row, 5).Value = app.ApplicantId.ToString();
+                row++;
+            }
+        }
+    }
+
+    private void WriteRelativeRecords(IXLWorksheet ws, ref int row, JobApplication app)
+    {
+        if (app.Applicant.InternalRelatives == null || !app.Applicant.InternalRelatives.Any()) return;
+        
+        foreach (var relative in app.Applicant.InternalRelatives)
+        {
+            ws.Cell(row, 1).Value = app.Applicant.CNICNumber ?? "N/A";
+            ws.Cell(row, 2).Value = relative.RelativeName ?? "N/A";
+            ws.Cell(row, 3).Value = relative.Department ?? "N/A";
+            ws.Cell(row, 4).Value = relative.Designation ?? "N/A";
+            ws.Cell(row, 5).Value = relative.PayScale ?? "N/A";
+            ws.Cell(row, 6).Value = app.ApplicantId.ToString();
+            row++;
+        }
+    }
+
+    private void WriteDocumentRecords(IXLWorksheet ws, ref int row, JobApplication app)
+    {
+        if (app.Applicant.Documents == null || !app.Applicant.Documents.Any()) return;
+        
+        foreach (var doc in app.Applicant.Documents)
+        {
+            ws.Cell(row, 1).Value = app.Applicant.CNICNumber ?? "N/A";
+            ws.Cell(row, 2).Value = doc.DocumentType ?? "N/A";
+            ws.Cell(row, 3).Value = doc.FileUrl ?? "N/A";
+            ws.Cell(row, 4).Value = app.ApplicantId.ToString();
+            row++;
+        }
+    }
+
+    private void WriteAchievementRecords(IXLWorksheet ws, ref int row, JobApplication app)
+    {
+        if (app.Applicant.Achievements == null || !app.Applicant.Achievements.Any()) return;
+        
+        foreach (var achievement in app.Applicant.Achievements)
+        {
+            ws.Cell(row, 1).Value = app.Applicant.CNICNumber ?? "N/A";
+            ws.Cell(row, 2).Value = achievement.Title ?? "N/A";
+            ws.Cell(row, 3).Value = achievement.Description ?? "N/A";
+            ws.Cell(row, 4).Value = achievement.DateReceived.ToString() ??"N/A";
+            ws.Cell(row, 5).Value = app.ApplicantId.ToString();
+            row++;
+        }
+    }
+
+    private async Task CopyFilesForJobAsync(JobOpening job, string tempRoot, string baseStoragePath)
+    {
+        var semaphore = new SemaphoreSlim(config.GetValue<int>("ExportSettings:MaxConcurrentFileCopies", 5));
+        var copyTasks = new List<Task>();
+
+        foreach (var app in job.JobApplications)
+        {
+            var task = Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await CopyApplicantFilesAsync(app, job, tempRoot, baseStoragePath);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+            copyTasks.Add(task);
+        }
+
+        await Task.WhenAll(copyTasks);
+        semaphore.Dispose();
+    }
+
+    private async Task CopyApplicantFilesAsync(JobApplication app, JobOpening job, string tempRoot, string baseStoragePath)
+    {
+        // Create folder structure
+        string jobFolderName = Sanitize($"{job.Title}_{job.Id.ToString()[..Math.Min(8, job.Id.ToString().Length)]}");
+        string jobPath = Path.Combine(tempRoot, jobFolderName);
+        
+        string applicantFolderName = Sanitize($"{app.Applicant.FullName}_{app.Applicant.CNICNumber}");
+        string applicantPath = Path.Combine(jobPath, applicantFolderName);
+        
+        bool hasFiles = false;
+
+        // Copy Profile Photo
+        if (!string.IsNullOrEmpty(app.Applicant.PassportImageUrl))
+        {
+            string profilePath = Path.Combine(applicantPath, "Profile_Photo");
+            Directory.CreateDirectory(profilePath);
+            await SafeCopyFileAsync(baseStoragePath, app.Applicant.PassportImageUrl, profilePath, "Passport_Photo");
+            hasFiles = true;
+        }
+
+        // Copy CV
+        if (!string.IsNullOrEmpty(app.Applicant.CvUrl))
+        {
+            string cvPath = Path.Combine(applicantPath, "CV_Portfolio");
+            Directory.CreateDirectory(cvPath);
+            await SafeCopyFileAsync(baseStoragePath, app.Applicant.CvUrl, cvPath, "Main_CV");
+            hasFiles = true;
+        }
+
+        // Copy Documents
+        if (app.Applicant.Documents != null && app.Applicant.Documents.Any())
+        {
+            string docsPath = Path.Combine(applicantPath, "Supporting_Documents");
+            Directory.CreateDirectory(docsPath);
+            
+            foreach (var doc in app.Applicant.Documents)
+            {
+                string typeFolder = Path.Combine(docsPath, Sanitize(doc.DocumentType ?? "Uncategorized"));
+                Directory.CreateDirectory(typeFolder);
+                string filePrefix = $"Doc_{Guid.NewGuid():N}"[..Math.Min(20, Guid.NewGuid().ToString().Length)];
+                await SafeCopyFileAsync(baseStoragePath, doc.FileUrl, typeFolder, filePrefix);
+                hasFiles = true;
+            }
+        }
+
+        // Remove empty folder if no files were copied
+        if (!hasFiles && Directory.Exists(applicantPath))
+        {
+            try { Directory.Delete(applicantPath, true); }
+            catch { /* Ignore cleanup errors */ }
+        }
+    }
+
+    private async Task SafeCopyFileAsync(string baseRoot, string? relativePath, string targetDir, string fileNamePrefix)
     {
         if (string.IsNullOrEmpty(relativePath)) return;
-        
-        // Clean relative path of leading slashes
-        string cleanRelative = relativePath.Replace("\\", "/").TrimStart('/');
-        string source = Path.GetFullPath(Path.Combine(baseRoot, cleanRelative));
 
-        if (File.Exists(source))
+        try
         {
+            // Clean the path
+            string cleanRelative = relativePath.Replace("\\", "/").TrimStart('/');
+            string source = Path.GetFullPath(Path.Combine(baseRoot, cleanRelative));
+
+            if (!File.Exists(source)) return;
+
             string ext = Path.GetExtension(source);
+            if (string.IsNullOrEmpty(ext)) ext = ".dat";
+            
             string dest = Path.Combine(targetDir, $"{fileNamePrefix}{ext}");
             
-            // Handle multiple files of same type (e.g. 2 degrees)
+            // Handle duplicates
             int count = 1;
-            while(File.Exists(dest)) dest = Path.Combine(targetDir, $"{fileNamePrefix}_{count++}{ext}");
+            while (File.Exists(dest)) 
+            {
+                dest = Path.Combine(targetDir, $"{fileNamePrefix}_{count++}{ext}");
+            }
             
-            await Task.Run(() => File.Copy(source, dest, true));
+            // Copy file with buffered stream
+            const int bufferSize = 81920; // 80KB buffer
+            using (var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, FileOptions.Asynchronous))
+            using (var destStream = new FileStream(dest, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize, FileOptions.Asynchronous))
+            {
+                await sourceStream.CopyToAsync(destStream, bufferSize);
+                await destStream.FlushAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to copy file {RelativePath} for prefix {FileNamePrefix}", relativePath, fileNamePrefix);
+            // Don't throw - continue with other files
         }
     }
 
     private string Sanitize(string name)
     {
-        // Remove invalid folder characters
-        char[] invalid = Path.GetInvalidFileNameChars();
-        foreach (char c in invalid) name = name.Replace(c, '_');
-        return name.Replace(" ", "_");
-    }
-    
-    private async Task GenerateMasterExcelAsync(List<JobApplication> applications, string filePath)
-    {
-        using var workbook = new XLWorkbook();
-
-        // --- SHEET 1: MASTER BIO-DATA (EXHAUSTIVE) ---
-        var wsMaster = workbook.Worksheets.Add("Master Registry");
+        if (string.IsNullOrEmpty(name)) return "Unknown";
         
-        var headers = new[] { 
-            "Tracking ID", 
-            "Job Applied For", 
-            "Current Status", "Applied At",
-            "Full Name", "CNIC Number", "Father Name", "Father CNIC", "DOB", "Gender", 
-            "Marital Status", "Religion", "Caste", "Sect", "Contact No", "Email", "PEC No",
-            "Present Address", "Permanent Address", "Army No", "Army Unit", "Army Character", "Army Scale",
-            "Current Salary", "Other Benefits", "Other Facilities", "Expected Salary", "Family Income Detail", 
-            "Total Brothers", "Total Sisters", "Total Children", "Candidate Type", "Accommodation",
-            "Sisters Married", "Brothers Married", "Children Married", "Sisters Unmarried", 
-            "Brothers Unmarried", "Children Unmarried", "JobId", "JobName", "CV", "Photo", "ApplicantId"
-        };
+        // Remove invalid characters
+        var invalidChars = Path.GetInvalidFileNameChars();
+        foreach (char c in invalidChars) 
+            name = name.Replace(c, '_');
         
-        for (int i = 0; i < headers.Length; i++) wsMaster.Cell(1, i + 1).Value = headers[i];
-
-        for (int i = 0; i < applications.Count; i++)
-        {
-            var app = applications[i];
-            var r = i + 2;
-            var a = app.Applicant;
-            var p = a.PersonalInfo;
-            var m = a.MilitaryDetail;
-            var f = a.FinancialDetail;
-            var fs = a.FamilySummary;
-
-            wsMaster.Cell(r, 1).Value = a.TrackingCode;
-            wsMaster.Cell(r, 2).Value = app.JobOpening.Title;
-            wsMaster.Cell(r, 3).Value = app.Status;
-            wsMaster.Cell(r, 4).Value = app.AppliedAt.DateTime;
-            wsMaster.Cell(r, 5).Value = a.FullName;
-            wsMaster.Cell(r, 6).Value = a.CNICNumber;
-            wsMaster.Cell(r, 7).Value = p?.FatherName;
-            wsMaster.Cell(r, 8).Value = p?.FatherCNIC;
-            wsMaster.Cell(r, 9).Value = p?.DateOfBirth;
-            wsMaster.Cell(r, 10).Value = p?.Gender;
-            wsMaster.Cell(r, 11).Value = p?.MaritalStatus;
-            wsMaster.Cell(r, 12).Value = p?.Religion;
-            wsMaster.Cell(r, 13).Value = p?.Caste;
-            wsMaster.Cell(r, 14).Value = p?.Sect;
-            wsMaster.Cell(r, 15).Value = p?.ContactNo;
-            wsMaster.Cell(r, 16).Value = p?.Email;
-            wsMaster.Cell(r, 17).Value = p?.PECNumber;
-            wsMaster.Cell(r, 18).Value = p?.PresentAddress;
-            wsMaster.Cell(r, 19).Value = p?.PermanentAddress;
-            wsMaster.Cell(r, 20).Value = m?.ArmyNumber;
-            wsMaster.Cell(r, 21).Value = m?.ArmyUnit;
-            wsMaster.Cell(r, 22).Value = m?.ArmyCharacter;
-            wsMaster.Cell(r, 23).Value = m?.ArmyPayScale;
-            wsMaster.Cell(r, 24).Value = f?.CurrentSalary;
-            wsMaster.Cell(r, 25).Value = f?.OtherBenefits;
-            wsMaster.Cell(r, 26).Value = f?.OtherFacilities;
-            wsMaster.Cell(r, 27).Value = f?.ExpectedSalary;
-            wsMaster.Cell(r, 28).Value = f?.FamilyIncomeDetail;
-            wsMaster.Cell(r, 29).Value = fs?.BrothersTotal;
-            wsMaster.Cell(r, 30).Value = fs?.SistersTotal;
-            wsMaster.Cell(r, 31).Value = fs?.ChildrenTotal;
-            wsMaster.Cell(r, 32).Value = p?.CandidateType;
-            wsMaster.Cell(r, 33).Value = p?.Accommodation;
-            wsMaster.Cell(r, 34).Value = fs?.SistersMarried;
-            wsMaster.Cell(r, 35).Value = fs?.BrothersMarried;
-            wsMaster.Cell(r, 36).Value = fs?.ChildrenMarried;
-            wsMaster.Cell(r, 37).Value = fs?.SistersUnmarried;
-            wsMaster.Cell(r, 38).Value = fs?.BrothersUnmarried;
-            wsMaster.Cell(r, 39).Value = fs?.ChildrenUnmarried;
-            wsMaster.Cell(r, 40).Value = app.JobOpeningId.ToString();
-            wsMaster.Cell(r, 41).Value = app.JobOpening.Title.ToString();
-            wsMaster.Cell(r, 42).Value = app.Applicant?.CvUrl?.ToString() ?? "N/A";
-            wsMaster.Cell(r, 43).Value = app.Applicant?.PassportImageUrl?.ToString() ?? "N/A";
-            wsMaster.Cell(r, 44).Value = app.ApplicantId.ToString() ?? "N/A";
-        }
-
-        // --- SHEET 2: EDUCATION ---
-        var wsEdu = workbook.Worksheets.Add("Education");
-        wsEdu.Cell(1, 1).Value = "CNIC"; wsEdu.Cell(1, 2).Value = "Level"; wsEdu.Cell(1, 3).Value = "Qualification"; wsEdu.Cell(1, 4).Value = "Institution";
-        wsEdu.Cell(1, 5).Value = "Result";
-        wsEdu.Cell(1, 6).Value = "ApplicantId";
-        int eduRow = 2;
-        foreach(var app in applications) {
-            foreach(var e in app.Applicant.Educations) {
-                wsEdu.Cell(eduRow, 1).Value = app.Applicant.CNICNumber;
-                wsEdu.Cell(eduRow, 2).Value = e.DegreeLevel?.Name??"N/A";
-                wsEdu.Cell(eduRow, 3).Value = e.Qualification;
-                wsEdu.Cell(eduRow, 4).Value = e.BoardUniversity;
-                wsEdu.Cell(eduRow, 5).Value = e.CgpaPercentage;
-                wsEdu.Cell(eduRow, 6).Value = app.ApplicantId.ToString() ?? "N/A";
-                eduRow++;
-            }
-        }
-
-        // --- SHEET 3: EXPERIENCE ---
-        var wsExp = workbook.Worksheets.Add("Experience");
-        wsExp.Cell(1, 1).Value = "CNIC"; wsExp.Cell(1, 2).Value = "Organization"; wsExp.Cell(1, 3).Value = "Designation"; wsExp.Cell(1, 4).Value = "From";
-        wsExp.Cell(1, 5).Value = "To";
-        wsExp.Cell(1, 6).Value = "Key Responsibilities";
-        wsExp.Cell(1, 7).Value = "ApplicantId";
-        int expRow = 2;
-        foreach(var app in applications) {
-            foreach(var ex in app.Applicant.Experiences) {
-                wsExp.Cell(expRow, 1).Value = app.Applicant.CNICNumber;
-                wsExp.Cell(expRow, 2).Value = ex.OrganizationName;
-                wsExp.Cell(expRow, 3).Value = ex.Designation;
-                wsExp.Cell(expRow, 4).Value = ex.FromDate;
-                wsExp.Cell(expRow, 5).Value = ex.ToDate;
-                wsExp.Cell(expRow, 6).Value = ex.KeyResponsibilities;
-                wsExp.Cell(expRow, 7).Value = app.ApplicantId.ToString() ?? "N/A";
-                expRow++;
-            }
-        }
-
-        // --- SHEET 4: SIBLINGS ---
-        var wsSib = workbook.Worksheets.Add("Siblings");
-        wsSib.Cell(1, 1).Value = "Applicant CNIC"; 
-        wsSib.Cell(1, 2).Value = "Sibling Name"; 
-        wsSib.Cell(1, 3).Value = "Gender"; 
-        wsSib.Cell(1, 4).Value = "Occupation";
-        wsSib.Cell(1, 5).Value = "CNIC";
-        wsSib.Cell(1, 6).Value = "DateOfBirth";
-        wsSib.Cell(1, 7).Value = "Designation";
-        wsSib.Cell(1, 8).Value = "Organization";
-        wsSib.Cell(1, 9).Value = "ApplicantId";
-        int sibRow = 2;
-        foreach(var app in applications) {
-            foreach(var s in app.Applicant.Siblings) {
-                wsSib.Cell(sibRow, 1).Value = app.Applicant.CNICNumber;
-                wsSib.Cell(sibRow, 2).Value = s.Name;
-                wsSib.Cell(sibRow, 3).Value = s.Gender;
-                wsSib.Cell(sibRow, 4).Value = s.Occupation;
-                wsSib.Cell(sibRow, 5).Value = s.CNIC;
-                wsSib.Cell(sibRow, 6).Value = s.DateOfBirth;
-                wsSib.Cell(sibRow, 7).Value = s.Designation;
-                wsSib.Cell(sibRow, 8).Value = s.Organization;
-                wsSib.Cell(sibRow, 9).Value = s.ApplicantId.ToString() ?? "N/A";
-                sibRow++;
-            }
-        }
-
-        // --- SHEET 5: PROFESSIONAL EXTRAS (Skills/Certs) ---
-        var wsExtra = workbook.Worksheets.Add("Skills & Certs");
-        wsExtra.Cell(1, 1).Value = "CNIC"; wsExtra.Cell(1, 2).Value = "Type"; wsExtra.Cell(1, 3).Value = "Name"; 
-        wsExtra.Cell(1, 4).Value = "Detail";
-        wsExtra.Cell(1, 5).Value = "ApplicantId";
-        int exRow = 2;
-        foreach(var app in applications) {
-            foreach(var sk in app.Applicant.Skills) {
-                wsExtra.Cell(exRow, 1).Value = app.Applicant.CNICNumber; 
-                wsExtra.Cell(exRow, 2).Value = "Skill"; 
-                wsExtra.Cell(exRow, 3).Value = sk.SkillName; 
-                wsExtra.Cell(exRow, 4).Value = sk.Proficiency;
-                wsExtra.Cell(exRow, 5).Value = app.ApplicantId.ToString() ?? "N/A";
-                exRow++;
-            }
-            foreach(var ct in app.Applicant.Certifications) {
-                wsExtra.Cell(exRow, 1).Value = app.Applicant.CNICNumber; 
-                wsExtra.Cell(exRow, 2).Value = "Certification"; 
-                wsExtra.Cell(exRow, 3).Value = ct.CertificateName; 
-                wsExtra.Cell(exRow, 4).Value = ct.IssuingBody;
-                wsExtra.Cell(exRow, 5).Value = app.ApplicantId.ToString() ?? "N/A";
-                exRow++;
-            }
-        }
-
-        var wsRelatives = workbook.Worksheets.Add("Relatives");
-        wsRelatives.Cell(1, 1).Value = "CNIC Applicant"; 
-        wsRelatives.Cell(1, 2).Value = "RelativeName"; 
-        wsRelatives.Cell(1, 3).Value = "Department"; 
-        wsRelatives.Cell(1, 4).Value = "Designation";
-        wsRelatives.Cell(1, 5).Value = "PayScale";
-        wsRelatives.Cell(1, 6).Value = "ApplicantId";
-        int rlRow = 2;
-        foreach(var app in applications) {
-            foreach(var rel in app.Applicant.InternalRelatives) {
-                wsRelatives.Cell(rlRow, 1).Value = app.Applicant.CNICNumber; 
-                wsRelatives.Cell(rlRow, 2).Value = rel.RelativeName;
-                wsRelatives.Cell(rlRow, 3).Value = rel.Department; 
-                wsRelatives.Cell(rlRow, 4).Value = rel.Designation;
-                wsRelatives.Cell(rlRow, 5).Value = rel.PayScale;
-                wsRelatives.Cell(rlRow, 6).Value = app.ApplicantId.ToString() ?? "N/A";
-                rlRow++;
-            }
-        }
+        // Limit length
+        if (name.Length > 100) 
+            name = name[..100];
         
-        var wsDoc = workbook.Worksheets.Add("Documents");
-        wsDoc.Cell(1, 1).Value = "CNIC"; wsDoc.Cell(1, 2).Value = "DocType";
-        wsDoc.Cell(1, 3).Value = "Id"; 
-        wsDoc.Cell(1, 4).Value = "Path";
-        wsDoc.Cell(1, 5).Value = "ApplicantId";
-        int wsdocRow = 2;
-        foreach(var app in applications) {
-            foreach(var doc in app.Applicant.Documents) {
-                wsDoc.Cell(wsdocRow, 1).Value = app.Applicant.CNICNumber;
-                wsDoc.Cell(wsdocRow, 2).Value = doc.DocumentType;
-                wsDoc.Cell(wsdocRow, 3).Value = doc.Id.ToString();
-                wsDoc.Cell(wsdocRow, 4).Value = doc.FileUrl;
-                wsDoc.Cell(wsdocRow, 5).Value = app.ApplicantId.ToString() ?? "N/A";
-                wsdocRow++;
-            }
-        }
-
-        // APPLY CORPORATE STYLING
-        foreach (var ws in workbook.Worksheets)
-        {
-            var range = ws.Range(1, 1, 1, ws.ColumnsUsed().Count());
-            range.Style.Fill.BackgroundColor = XLColor.FromHtml("#064E3B");
-            range.Style.Font.FontColor = XLColor.White;
-            range.Style.Font.Bold = true;
-            ws.Columns().AdjustToContents();
-            ws.SheetView.FreezeRows(1);
-        }
-
-        workbook.SaveAs(filePath);
+        return name.Replace(" ", "_").Trim('_');
     }
 }
-
