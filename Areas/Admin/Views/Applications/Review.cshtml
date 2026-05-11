@@ -348,13 +348,13 @@
 
     @if (a.Documents != null && a.Documents.Any())
     { 
-        <div class="grid  grid-cols-1   lg:grid-cols-2 ">
+        <div class="grid  grid-cols-1  gap-2 lg:grid-cols-2 ">
         @foreach (var doc in a.Documents)
         {
-            <div class="bg-white rounded-2xl h-52 border-slate-300 gap-5 border border-slate-200 shadow-xl overflow-hidden">
+            <div class="bg-white rounded-2xl h-36 border-slate-300 gap-5 border border-slate-200 shadow-xl overflow-hidden">
                 <!-- Header for each Document -->
-                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
+                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex  flex-wrap justify-between items-center">
+                    <div class="flex items-center gap-3 flex-wrap ">
                         <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-100">
                             @{
                                 var ext = System.IO.Path.GetExtension(doc.FileUrl).ToLower();
@@ -363,12 +363,12 @@
                             }
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-tight">@doc.DocumentType</h3>
+                            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-tight"> (@doc.DocumentType)</h3>
                             <p class="text-[10px] text-slate-500 font-medium uppercase">Uploaded: @doc.UploadedAt.ToString("MMM dd, yyyy HH:mm")</p>
                         </div>
                     </div>
                     
-                    <div class="flex gap-2">
+                    <div class="flex  flex-wrap flex-wrap gap-2">
                         <a href="@GetUrl(doc.FileUrl)" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
                             <i data-lucide="maximize" class="w-3.5 h-3.5"></i> Full Screen
                         </a>
@@ -378,13 +378,7 @@
                     </div>
                 </div>
 
-                <!-- The Document Frame -->
-                <div class="bg-slate-100 h-[700px] relative">
-                    <iframe src="@GetUrl(doc.FileUrl)#view=FitH" 
-                            class="w-full h-full border-none bg-white" 
-                            loading="lazy">
-                    </iframe>
-                </div>
+          
             </div>
         }
         </div>
