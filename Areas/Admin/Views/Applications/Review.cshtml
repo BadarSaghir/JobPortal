@@ -95,11 +95,11 @@
                 </button>
             </div>
         </div>
-    <div class="no-print bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-               <h3 class="text-sm font-bold text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
+    <div class="bg-white rounded-xl border no-print border-slate-700 p-6 shadow-sm">
+                <h3 class=" no-print text-sm font-bold text-slate-900 uppercase tracking-widest mb-5 flex items-center gap-2 border-b border-slate-100 pb-3">
                     <i data-lucide="gavel" class="w-4 h-4"></i> Merit Decision
                 </h3>
-                <form asp-action="UpdateStatus" method="post" class="space-y-4">
+                <form asp-action="UpdateStatus" method="post" class="space-y-4 no-prin shadow-sm border-slate-900">
                     <input type="hidden" name="applicationId" value="@Model.ApplicationId" />
                     
                     <div>
@@ -116,12 +116,13 @@
                         <label class="text-xs font-semibold text-slate-600 block mb-2">Recruiter Remarks</label>
                         <textarea name="remarks" rows="4" placeholder="Enter notes..." class="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black resize-none text-slate-800">@Model.RecruiterRemarks</textarea>
                     </div>
-                    
-                    <button type="submit" class="w-full py-3 rounded text-sm font-bold uppercase tracking-widest  transition-colors shadow">
+                    <div>
+                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white w-full py-3 rounded text-sm font-bold uppercase tracking-widest  transition-colors shadow">
                         Save Decision
                     </button>
+                    </div>
                 </form>
-            </div> 
+            </div>
 
         <!-- LATEX DOCUMENT A4 PAPER CONTAINER -->
         <div id="latex-document" class="bg-white mx-auto shadow-2xl p-12 sm:p-16 w-full max-w-[210mm] min-h-[297mm]">
@@ -310,7 +311,7 @@
     </div>
 
     <!-- RIGHT: INTERACTIVE SIDEBAR (HIDDEN ON PRINT) -->
-    <aside class="w-full xl:w-[450px] shrink-0 no-print">
+    <aside class="w-full shrink-0 no-print">
         <div class="sticky top-24 space-y-6">
             
             <!-- 1. DECISION HUB -->
@@ -346,10 +347,11 @@
     </div>
 
     @if (a.Documents != null && a.Documents.Any())
-    {
+    { 
+        <div class="grid  grid-cols-1   lg:grid-cols-2 ">
         @foreach (var doc in a.Documents)
         {
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
+            <div class="bg-white rounded-2xl h-52 border-slate-300 gap-5 border border-slate-200 shadow-xl overflow-hidden">
                 <!-- Header for each Document -->
                 <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                     <div class="flex items-center gap-3">
@@ -385,6 +387,7 @@
                 </div>
             </div>
         }
+        </div>
     }
     else
     {
