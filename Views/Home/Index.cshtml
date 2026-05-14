@@ -187,10 +187,119 @@
         </div>
     </div>
 </section>
+<!-- SECTION: RECRUITMENT FAQ -->
+<!-- SECTION: RECRUITMENT FAQ (ACCORDION) -->
+<section class="bg-white py-20 md:py-32">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-12">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-black text-secondary tracking-tighter mb-4">Frequently Asked Questions</h2>
+                <p class="text-slate-500 font-medium text-sm md:text-base">Quick answers to the most common recruitment queries.</p>
+            </div>
 
+            <!-- FAQ Accordion Container -->
+            <div class="space-y-4">
+                
+                <!-- QUESTION 1: TRACKING & DOWNLOADING -->
+                <div class="faq-item group border border-slate-100 rounded-3xl overflow-hidden transition-all duration-300 hover:border-primary/30">
+                    <button class="faq-trigger w-full flex items-center justify-between p-6 md:p-8 text-left bg-white transition-colors">
+                        <span class="text-lg md:text-xl font-bold text-secondary pr-8">How do I track my application or download my record?</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0 transition-transform duration-300 chevron-icon">
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-primary"></i>
+                        </div>
+                    </button>
+                    
+                    <div class="faq-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out bg-slate-50/50">
+                        <div class="p-6 md:p-8 pt-0 border-t border-slate-50">
+                            <p class="text-slate-600 leading-relaxed mb-6">
+                                Every applicant is provided with a digital footprint. You can retrieve your application to check your shortlisting status or download a copy for your records using our secure tracking system.
+                            </p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                                    <h4 class="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Search Methods</h4>
+                                    <p class="text-xs text-slate-500 font-medium">Use your 13-digit <strong>CNIC Number</strong> or the unique <strong>Tracking ID</strong> (e.g., C635-XYZ) sent to you upon submission.</p>
+                                </div>
+                                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                                    <h4 class="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Download Process</h4>
+                                    <p class="text-xs text-slate-500 font-medium">Locate your record on the <a href="@Url.Action("Track", "Jobs")" class="text-primary font-bold hover:underline">Track Page</a> and click the <strong>"Print Record"</strong> button to save as PDF.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUESTION 2: EDITING -->
+                <div class="faq-item group border border-slate-100 rounded-3xl overflow-hidden transition-all duration-300 hover:border-primary/30">
+                    <button class="faq-trigger w-full flex items-center justify-between p-6 md:p-8 text-left bg-white transition-colors">
+                        <span class="text-lg md:text-xl font-bold text-secondary pr-8">Can I modify my bio-data after final submission?</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0 transition-transform duration-300 chevron-icon">
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-primary"></i>
+                        </div>
+                    </button>
+                    <div class="faq-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out bg-slate-50/50">
+                        <div class="p-6 md:p-8 pt-0 border-t border-slate-50">
+                            <p class="text-slate-600 leading-relaxed text-sm">
+                                To ensure fairness and merit transparency, applications cannot be edited once submitted. We recommend reviewing the 8-page bio-data form thoroughly before clicking the final submit button.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUESTION 3: SUPPORT -->
+                <div class="faq-item group border border-slate-100 rounded-3xl overflow-hidden transition-all duration-300 hover:border-primary/30">
+                    <button class="faq-trigger w-full flex items-center justify-between p-6 md:p-8 text-left bg-white transition-colors">
+                        <span class="text-lg md:text-xl font-bold text-secondary pr-8">What should I do if my photo/Document fails to upload?</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0 transition-transform duration-300 chevron-icon">
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-primary"></i>
+                        </div>
+                    </button>
+                    <div class="faq-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out bg-slate-50/50">
+                        <div class="p-6 md:p-8 pt-0 border-t border-slate-50">
+                            <p class="text-slate-600 leading-relaxed text-sm">
+                                Ensure your photo/Document is in JPG or PNG format and under required size.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
 @section Scripts {
 <script>
+    
     document.addEventListener("DOMContentLoaded", function() {
+        
+        document.querySelectorAll('.faq-trigger').forEach(trigger => {
+    trigger.addEventListener('click', () => {
+        const item = trigger.parentElement;
+        const content = trigger.nextElementSibling;
+        const icon = trigger.querySelector('.chevron-icon');
+        
+        // Close others (Optional: remove this part if you want multiple open at once)
+        document.querySelectorAll('.faq-content').forEach(other => {
+            if (other !== content) {
+                other.style.maxHeight = null;
+                other.parentElement.classList.remove('active');
+                other.previousElementSibling.querySelector('.chevron-icon').style.transform = 'rotate(0deg)';
+            }
+        });
+
+        // Toggle current
+        if (content.style.maxHeight) {
+            content.style.maxHeight = null;
+            item.classList.remove('active');
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            content.style.maxHeight = content.scrollHeight + "px";
+            item.classList.add('active');
+            icon.style.transform = 'rotate(180deg)';
+        }
+    });
+});
+        
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
         // 1. UTC Countdown Logic
