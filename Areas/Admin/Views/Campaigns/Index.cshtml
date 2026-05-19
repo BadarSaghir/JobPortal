@@ -88,11 +88,11 @@
                             </td>
                             <td class="px-10 py-6 text-right">
                                 <div class="flex justify-end items-center gap-4">
-                                    @if (c.ExportStatus == "Processing")
+                                    @if (c.ExportStatus != "Completed")
                                     {
                                         <div class="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-xl border border-amber-100 animate-pulse text-amber-600">
                                             <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
-                                            <span class="text-[9px] font-black uppercase tracking-tighter">Zipping...</span>
+                                            <span class="text-[9px] font-black uppercase tracking-tighter">@c.ExportStatus </span>
                                         </div>
                                     }
                                     else
