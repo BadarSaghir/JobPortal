@@ -153,12 +153,25 @@
                 <p class="text-slate-500 font-light leading-relaxed max-w-sm text-base">Enter the unique Identity Code provided during your final submission to view live status.</p>
                 
                 <form asp-controller="Jobs" asp-action="Track" method="get" class="flex flex-col sm:flex-row gap-3 max-w-md">
-                    <input name="code" type="text" placeholder="(e.g. C635-XYZ) or (e.g. 11111-1111111-1)" 
-                           class="flex-1 bg-white border border-slate-200 rounded-2xl px-6 py-4 text-sm outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono" />
+                 <div class="flex-1 flex  items-center px-4 gap-3 py-2">
+                <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+     <input name="code"  type="text" 
+       placeholder="Enter CNIC or Tracking ID..." 
+       class="w-full bg-transparent outline-none font-bold text-slate-700 tracking-wider" 
+       required 
+      />
+                 </div>
+
+     
+                   
                     <button type="submit" class="bg-secondary text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary transition-all">
                         Verify
                     </button>
+
                 </form>
+                      <p class="text-[10px] text-slate-400 mt-2 px-2 uppercase font-bold tracking-widest">
+    Tip: Type your CNIC (e.g. 12345-1234567-1) or ID (e.g. C635-XYZ)
+</p>
             </div>
 
             <!-- Support Ticket -->
@@ -271,7 +284,51 @@
 <script>
     
     document.addEventListener("DOMContentLoaded", function() {
+     // --- 1. SMART INPUT FORMATTING ---
+const searchInput = document.querySelector('input[name="code"]');
+
+searchInput.addEventListener('input', function(e) {
+    let rawValue = e.target.value;
+    let cleanValue = rawValue.replace(/[^a-zA-Z0-9]/g, '');
+
+    // CHECK: Is it a Tracking ID? (Starts with a letter)
+    if (/^[a-zA-Z]/.test(cleanValue)) {
+        // Remove maxlength limit for IDs so they can be any length
+        searchInput.removeAttribute('maxlength');
+        e.target.value = cleanValue.toUpperCase();
+    } 
+    // CHECK: Is it a CNIC? (Starts with a digit)
+    else {
+        // Enforce CNIC length limit (13 digits + 2 dashes = 15 chars)
+        searchInput.setAttribute('maxlength', '15');
         
+        let val = cleanValue;
+        // Limit to 13 digits total
+        if (val.length > 13) val = val.substring(0, 13);
+        
+        // Apply CNIC Mask: XXXXX-XXXXXXX-X
+        if (val.length > 12) {
+            val = val.replace(/^(\d{5})(\d{7})(\d{0,1})$/, '$1-$2-$3');
+        } else if (val.length > 5) {
+            val = val.replace(/^(\d{5})(\d{0,7})$/, '$1-$2');
+        }
+        e.target.value = val;
+    }
+});
+
+// Reset attributes if user clears the input
+searchInput.addEventListener('keyup', function(e) {
+    if (e.target.value === "") {
+        searchInput.removeAttribute('maxlength');
+    }
+});
+
+// Trigger on paste to re-format immediately
+searchInput.addEventListener('paste', function(e) {
+    setTimeout(() => {
+        searchInput.dispatchEvent(new Event('input'));
+    }, 0);
+});  
         document.querySelectorAll('.faq-trigger').forEach(trigger => {
     trigger.addEventListener('click', () => {
         const item = trigger.parentElement;
