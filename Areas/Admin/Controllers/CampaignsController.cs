@@ -78,7 +78,13 @@ public async Task<IActionResult> UpdateName(Guid id, string name)
     {
         var adminIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(adminIdClaim, out var adminId)) return Unauthorized();
+var isSystemBusy = await context.Set<CampaignExportTask>()
+    .AnyAsync(t => t.Status == "Processing");
 
+if (isSystemBusy) {
+    TempData["Error"] = "System is busy processing another export. Please try again later.";
+    return RedirectToAction(nameof(Index));
+}
         // Check if this campaign exists and isn't already processing
         var existingTask = await context.Set<CampaignExportTask>()
             .FirstOrDefaultAsync(t => t.CampaignId == id);
