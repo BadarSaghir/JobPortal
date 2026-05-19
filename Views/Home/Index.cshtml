@@ -287,26 +287,33 @@
      // --- 1. SMART INPUT FORMATTING ---
 const searchInput = document.querySelector('input[name="code"]');
 
+
 searchInput.addEventListener('input', function(e) {
     let rawValue = e.target.value;
-    let cleanValue = rawValue.replace(/[^a-zA-Z0-9]/g, '');
 
-    // CHECK: Is it a Tracking ID? (Starts with a letter)
-    if (/^[a-zA-Z]/.test(cleanValue)) {
-        // Remove maxlength limit for IDs so they can be any length
+    // 1. CHECK: Is it a Tracking ID? (Starts with a letter)
+    if (/^[a-zA-Z]/.test(rawValue)) {
+        // Remove maxlength limit
         searchInput.removeAttribute('maxlength');
-        e.target.value = cleanValue.toUpperCase();
+        // Do NOT strip dashes. Just ensure it's uppercase.
+        // We do NOT modify e.target.value here to allow user-pasted dashes to remain.
+        if (e.target.value !== e.target.value.toUpperCase()) {
+            e.target.value = e.target.value.toUpperCase();
+        }
     } 
-    // CHECK: Is it a CNIC? (Starts with a digit)
+    // 2. CHECK: Is it a CNIC? (Starts with a digit)
     else {
+        // Strip everything except digits to re-calculate dashes
+        let cleanValue = rawValue.replace(/[^0-9]/g, '');
+        
         // Enforce CNIC length limit (13 digits + 2 dashes = 15 chars)
         searchInput.setAttribute('maxlength', '15');
         
-        let val = cleanValue;
-        // Limit to 13 digits total
-        if (val.length > 13) val = val.substring(0, 13);
+        // Limit to 13 digits
+        if (cleanValue.length > 13) cleanValue = cleanValue.substring(0, 13);
         
         // Apply CNIC Mask: XXXXX-XXXXXXX-X
+        let val = cleanValue;
         if (val.length > 12) {
             val = val.replace(/^(\d{5})(\d{7})(\d{0,1})$/, '$1-$2-$3');
         } else if (val.length > 5) {
@@ -316,13 +323,12 @@ searchInput.addEventListener('input', function(e) {
     }
 });
 
-// Reset attributes if user clears the input
+// Reset if empty
 searchInput.addEventListener('keyup', function(e) {
     if (e.target.value === "") {
         searchInput.removeAttribute('maxlength');
     }
 });
-
 // Trigger on paste to re-format immediately
 searchInput.addEventListener('paste', function(e) {
     setTimeout(() => {
