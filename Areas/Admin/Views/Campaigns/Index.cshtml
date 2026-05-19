@@ -88,7 +88,7 @@
                             </td>
                             <td class="px-10 py-6 text-right">
                                 <div class="flex justify-end items-center gap-4">
-                                    @if (c.ExportStatus != "Completed")
+                                    @if (c.ExportStatus == "Processing")
                                     {
                                         <div class="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-xl border border-amber-100 animate-pulse text-amber-600">
                                             <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
@@ -102,7 +102,7 @@
                                             <a asp-action="Download" asp-route-id="@c.Id" class="text-[10px] font-black text-emerald-600 underline uppercase tracking-tighter mr-2 hover:text-slate-900 transition-colors">
                                                 Download Latest ZIP
                                             </a>
-                                        }
+                                        }else{}
 
                                         <form asp-action="RequestExport" asp-route-id="@c.Id" method="post" onsubmit="return confirm('Dossier Generation: This will generate a new ZIP and delete previous versions. Large campaigns may take minutes. Proceed?')">
                                             @Html.AntiForgeryToken()
