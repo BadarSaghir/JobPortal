@@ -399,7 +399,7 @@ private async Task WriteMasterSheet(Spreadsheet s, StyleId h, Guid? campaignId)
     private async Task ProcessFileCopiesAsync(CampaignExportTask task, string tempRoot, string baseRoot)
     {
         int skip = 0;
-        int batchSize = 100; // Pulling 100 applicant file mappings into memory at a time
+        int batchSize = 30; // Pulling 100 applicant file mappings into memory at a time
         bool hasData = true;
 
         // SemaphoreSlim restricts the max degree of concurrency for actual Disk I/O Operations.
