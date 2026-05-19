@@ -82,7 +82,7 @@ var isSystemBusy = await context.Set<CampaignExportTask>()
     .AnyAsync(t => t.Status == "Processing");
 
 if (isSystemBusy) {
-    TempData["Error"] = "System is busy processing another export. Please try again later.";
+    TempData["Info"] = "System is busy processing another export. Please try again later.";
     return RedirectToAction(nameof(Index));
 }
         // Check if this campaign exists and isn't already processing
@@ -137,37 +137,65 @@ if (isSystemBusy) {
     }
 
     // 4. PHYSICAL FILE DOWNLOAD
-    [HttpGet("Download/{id}")]
-    public async Task<IActionResult> Download(Guid id)
-    {
-        var task = await context.Set<CampaignExportTask>()
-            .Include(t => t.Campaign)
-            .FirstOrDefaultAsync(t => t.CampaignId == id && t.Status == "Completed");
+    // [HttpGet("Download/{id}")]
+    // public async Task<IActionResult> Download(Guid id)
+    // {
+    //     var task = await context.Set<CampaignExportTask>()
+    //         .Include(t => t.Campaign)
+    //         .FirstOrDefaultAsync(t => t.CampaignId == id && t.Status == "Completed");
 
-        if (task == null || string.IsNullOrEmpty(task.DownloadUrl))
-        {
-            TempData["Error"] = "Download file not found or export not completed.";
-            return RedirectToAction(nameof(Index));
-        }
+    //     if (task == null || string.IsNullOrEmpty(task.DownloadUrl))
+    //     {
+    //         TempData["Error"] = "Download file not found or export not completed.";
+    //         return RedirectToAction(nameof(Index));
+    //     }
 
-        // Resolve physical path from relative DB path
-        string root = config.GetValue<string>("StorageSettings:DocumentRoot") ?? "uploads";
-        string baseDir = root.StartsWith("wwwroot") ? Path.Combine(env.ContentRootPath, root) : root;
+    //     // Resolve physical path from relative DB path
+    //     string root = config.GetValue<string>("StorageSettings:DocumentRoot") ?? "uploads";
+    //     string baseDir = root.StartsWith("wwwroot") ? Path.Combine(env.ContentRootPath, root) : root;
         
-        // DownloadUrl looks like: /uploads/exports/FILE.zip
-        var fileName = Path.GetFileName(task.DownloadUrl);
-        var filePath = Path.Combine(baseDir, "exports", fileName);
+    //     // DownloadUrl looks like: /uploads/exports/FILE.zip
+    //     var fileName = Path.GetFileName(task.DownloadUrl);
+    //     var filePath = Path.Combine(baseDir, "exports", fileName);
 
-        if (!System.IO.File.Exists(filePath))
-        {
-            TempData["Error"] = "The physical ZIP file has been removed from the server.";
-            return RedirectToAction(nameof(Index));
-        }
+    //     if (!System.IO.File.Exists(filePath))
+    //     {
+    //         TempData["Error"] = "The physical ZIP file has been removed from the server.";
+    //         return RedirectToAction(nameof(Index));
+    //     }
 
-        var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-        return File(fileBytes, "application/zip", fileName);
+    //     var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+    //     return File(fileBytes, "application/zip", fileName);
+    // }
+[HttpGet("Download/{id}")]
+public async Task<IActionResult> Download(Guid id)
+{
+    var task = await context.Set<CampaignExportTask>()
+        .Include(t => t.Campaign)
+        .FirstOrDefaultAsync(t => t.CampaignId == id && t.Status == "Completed");
+
+    if (task == null || string.IsNullOrEmpty(task.DownloadUrl))
+    {
+        TempData["Error"] = "Download file not found or export not completed.";
+        return RedirectToAction(nameof(Index));
     }
 
+    string root = config.GetValue<string>("StorageSettings:DocumentRoot") ?? "uploads";
+    string baseDir = root.StartsWith("wwwroot") ? Path.Combine(env.ContentRootPath, root) : root;
+    
+    var fileName = Path.GetFileName(task.DownloadUrl);
+    var filePath = Path.Combine(baseDir, "exports", fileName);
+
+    if (!System.IO.File.Exists(filePath))
+    {
+        TempData["Error"] = "The physical ZIP file has been removed from the server.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // FIX: Stream the file directly from disk instead of loading it into RAM.
+    // enableRangeProcessing allows browsers to pause/resume large downloads.
+    return PhysicalFile(filePath, "application/zip", fileName, enableRangeProcessing: true);
+}
     // 5. TOGGLE CAMPAIGN STATUS
     [HttpPost("ToggleStatus/{id}")]
     [ValidateAntiForgeryToken]

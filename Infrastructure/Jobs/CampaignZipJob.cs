@@ -49,7 +49,7 @@ public class CampaignZipJob(
         try
         {
             await Log("JOB STARTED", $"Task ID: {taskId} | Campaign: {task.Campaign?.Name}");
-            await UpdateTaskStatus(task, "Initializing Workspace");
+            await UpdateTaskStatus(task, "Processing");
 
             if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
             Directory.CreateDirectory(tempRoot);
@@ -69,7 +69,7 @@ public class CampaignZipJob(
             File.Copy(_logFilePath, internalLogPath, true);
 
             // 5. Create ZIP
-            await UpdateTaskStatus(task, "Compressing into ZIP...");
+            await UpdateTaskStatus(task, "Processing");
             string exportDir = Path.Combine(baseStoragePath, "exports");
             Directory.CreateDirectory(exportDir);
 
@@ -457,7 +457,7 @@ private async Task WriteMasterSheet(Spreadsheet s, StyleId h, Guid? campaignId)
             await Task.WhenAll(copyTasks); // Execute batch safely with semaphore cap
 
             skip += batchApps.Count;
-            await UpdateTaskStatus(task, $"Files copied: {skip} applicants...");
+            await UpdateTaskStatus(task, $"Processing");
             await Log("FILES", $"Processed batch skip {skip}.");
         }
     }
