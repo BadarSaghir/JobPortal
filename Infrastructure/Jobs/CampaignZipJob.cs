@@ -312,14 +312,18 @@ private async Task WriteMasterSheet(Spreadsheet s, StyleId h, Guid? campaignId)
 
     private async Task WriteSiblingSheet(Spreadsheet s, StyleId h, Guid? campaignId)
     {
-        string[] headers = { "CNIC","Sibling CNIC", "Sibling Name", "Gender", "Occupation", "Organization","MaritalStatus","Designation","ApplicantId" };
+        string[] headers = { "CNIC","Sibling CNIC", "Sibling Name", "Gender", "Occupation", "Organization","Designation","MaritalStatus","ApplicantId" };
         await s.AddRowAsync(headers.Select(x => new StyledCell(x, h)).ToList());
 
         var query = context.Set<ApplicantSibling>().AsNoTracking().Include(x => x.Applicant)
             .Where(x => context.JobApplications.Any(ja => ja.ApplicantId == x.ApplicantId && ja.JobOpening.CampaignId == campaignId)).AsAsyncEnumerable();
 
         await foreach (var x in query)
-            await s.AddRowAsync(new List<DataCell> { new(x.Applicant.CNICNumber ?? ""), new(x.CNIC ?? ""), new(x.Name ?? ""), new(x.Gender ?? ""), new(x.Occupation ?? ""),new(x.MaritalStatus ?? ""),new(x.Organization ?? ""),new(x.Designation ?? ""), new(x.ApplicantId.ToString()) });
+            await s.AddRowAsync(new List<DataCell> { new(x.Applicant.CNICNumber ?? ""), new(x.CNIC ?? ""), new(x.Name ?? ""), new(x.Gender ?? ""), new(x.Occupation ?? ""),
+            new(x.Organization ?? ""),
+            new(x.Designation ?? ""), 
+            new(x.MaritalStatus ?? ""),
+            new(x.ApplicantId.ToString()) });
     }
 
     private async Task WriteSkillsCertsSheet(Spreadsheet s, StyleId h, Guid? campaignId)
