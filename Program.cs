@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseKestrel(options =>
-{
+{    options.Limits.MinResponseDataRate = null;
+
     options.AddServerHeader = false;
 });
 builder.Services.AddDistributedMemoryCache(); // Required for Session
